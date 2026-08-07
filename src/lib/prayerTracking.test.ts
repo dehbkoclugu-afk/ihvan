@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { prayerCompletionPercent, prunePrayerCompletions, recentDayKeys } from './prayerTracking.ts';
+import { prayerCompletionPercent, prayerPercentFor, prunePrayerCompletions, recentDayKeys } from './prayerTracking.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -14,6 +14,15 @@ test('calculates prayer completion over a seven-day window', () => {
     '2026-08-07': ['fajr', 'dhuhr'],
   }, 7, now), 20);
   assert.equal(prayerCompletionPercent({}, 7, now), 0);
+});
+
+test('calculates completion for one prayer over a window', () => {
+  assert.equal(prayerPercentFor({
+    '2026-08-08': ['fajr', 'isha'],
+    '2026-08-07': ['fajr'],
+    '2026-08-06': ['isha'],
+  }, 'fajr', 4, now), 50);
+  assert.equal(prayerPercentFor({}, 'isha', 0, now), 0);
 });
 
 test('prunes completion history outside the retention window', () => {

@@ -10,7 +10,7 @@
 - Foreground-location prayer times with the Adhan Turkey calculation method
 - Qibla bearing and optional live device compass
 - Opt-in local prayer-time notifications (10-day rolling schedule)
-- Private five-prayer daily completion tracking with a 7-day progress view
+- Private five-prayer daily completion tracking with editable history and 7/30/90-day progress views
 - Private reflection journal
 - Vigil/Dawn themes
 - RevenueCat-ready subscription boundary
