@@ -11,12 +11,15 @@
 - Vigil/Dawn themes
 - RevenueCat-ready subscription boundary
 
-The bundled Quran content is intentionally limited to a small verified starter set. Full Quran text, translations, tafsir and recitation should be synced from a vetted source such as Quran Foundation before store release; generated or machine-translated scripture must never be used.
+The complete Arabic Quran is bundled verbatim from the Tanzil Project Uthmani text (CC BY 3.0), with an integrity fingerprint and 114-surah / 6,236-ayah validation. See `THIRD_PARTY_NOTICES.md`.
+
+Sacred-content rule: Quran text, translations/meals, tafsir and duas must never be machine/AI translated. Turkish meal, tafsir and translated dua content stay disabled until a human-authored source and its usage rights are explicitly approved.
 
 ## Run
 
 ```bash
 npm install
+npm run build:quran
 npm run typecheck
 npm test
 npx expo start

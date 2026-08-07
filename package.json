@@ -8,7 +8,8 @@
     "ios": "expo start --ios",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/lib/dates.test.ts src/services/purchases.test.ts"
+    "build:quran": "node scripts/build-quran.mjs",
+    "test": "node --experimental-strip-types --test src/lib/dates.test.ts src/services/purchases.test.ts src/data/quran.integrity.test.ts"
   },
   "dependencies": {
     "@expo-google-fonts/figtree": "^0.2.3",
