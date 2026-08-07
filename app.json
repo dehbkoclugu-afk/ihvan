@@ -15,7 +15,8 @@
       }
     },
     "android": {
-      "package": "com.ihvan.quran"
+      "package": "com.ihvan.quran",
+      "permissions": ["SCHEDULE_EXACT_ALARM"]
     },
     "web": {
       "bundler": "metro",

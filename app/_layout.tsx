@@ -10,8 +10,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useTheme, useThemeName } from '@/hooks/useTheme';
 import { useStreakStore } from '@/state/useStreakStore';
 import { initPurchases } from '@/services/purchases';
+import { configurePrayerNotificationHandler } from '@/services/prayerNotifications';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+configurePrayerNotificationHandler();
 
 export default function RootLayout() {
   const t = useTheme();

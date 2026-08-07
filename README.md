@@ -9,6 +9,7 @@
 - Dua and dhikr practice
 - Foreground-location prayer times with the Adhan Turkey calculation method
 - Qibla bearing and optional live device compass
+- Opt-in local prayer-time notifications (10-day rolling schedule)
 - Private reflection journal
 - Vigil/Dawn themes
 - RevenueCat-ready subscription boundary
@@ -30,3 +31,5 @@ npx expo start
 RevenueCat runs in development mock mode until `EXPO_PUBLIC_REVENUECAT_IOS_KEY` / `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` are configured.
 
 Prayer calculations use Adhan JS `CalculationMethod.Turkey()`, documented by its maintainers as an approximation of the Diyanet method. The app requests foreground location only and does not enable background location tracking.
+
+Prayer reminders are local device notifications, opt-in only, and are refreshed as a rolling 10-day schedule when the prayer screen is opened. Android declares `SCHEDULE_EXACT_ALARM` so scheduled prayer reminders can target exact calculated times.
