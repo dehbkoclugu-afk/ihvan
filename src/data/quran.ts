@@ -6,6 +6,7 @@ import {
   type QuranAyah,
   type QuranSurah,
 } from './quran.generated';
+import { positionPercent } from '../lib/quranProgress';
 
 export { QURAN_AYAHS, QURAN_SURAHS, getAyah, getSurahAyahs };
 export type { QuranAyah, QuranSurah };
@@ -26,6 +27,12 @@ const DAILY_REFERENCES = [
 export function ayahReference(ayah: Pick<QuranAyah, 'surah' | 'ayah'>): string {
   const surah = QURAN_SURAHS[ayah.surah - 1];
   return `${surah?.transliteration ?? ayah.surah} ${ayah.surah}:${ayah.ayah}`;
+}
+
+export function mushafPositionPercent(surahId: number, ayahNumber: number): number {
+  const surah = QURAN_SURAHS[surahId - 1];
+  if (!surah) return 0;
+  return positionPercent(surah.start, ayahNumber, surah.ayahCount, QURAN_AYAHS.length);
 }
 
 export function dailyAyah(date = new Date()): DailyAyah {
