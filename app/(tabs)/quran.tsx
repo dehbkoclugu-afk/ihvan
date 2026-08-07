@@ -6,6 +6,7 @@ import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { QURAN_JUZS, QURAN_SURAHS, getAyah, mushafPositionPercent } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
+import { quranGoalPercent, quranReadCount, type QuranReadingGoal } from '@/lib/quranHabit';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
@@ -18,7 +19,9 @@ export default function Quran() {
   const t = useTheme();
   const [query, setQuery] = useState('');
   const [browseMode, setBrowseMode] = useState<'surahs' | 'juzs'>('surahs');
-  const { lastRead, bookmarks } = useQuranProgressStore();
+  const { lastRead, bookmarks, readingDays, readingGoal, setReadingGoal } = useQuranProgressStore();
+  const readToday = quranReadCount(readingDays);
+  const goalPercent = quranGoalPercent(readToday, readingGoal);
   const verseMatch = query.trim().match(/^(\d{1,3})\s*:\s*(\d{1,3})$/);
   const directAyah = verseMatch ? getAyah(Number(verseMatch[1]), Number(verseMatch[2])) : undefined;
   const bookmarkAyahs = useMemo(() => bookmarks.slice(0, 5).map((key) => {
@@ -43,6 +46,12 @@ export default function Quran() {
       <View style={{ height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.12)', marginTop: spacing.md }}><View style={{ width: `${mushafPositionPercent(lastRead.surah, lastRead.ayah)}%`, height: 4, borderRadius: 2, backgroundColor: '#B6E3D4' }} /></View>
       <Text style={{ color: 'rgba(246,242,233,0.55)', fontFamily: fonts.sans, fontSize: 10, marginTop: 6 }}>Mushaf konumu %{mushafPositionPercent(lastRead.surah, lastRead.ayah).toFixed(1)}</Text>
     </Pressable> : null}
+
+    <View style={{ backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.card, padding: spacing.lg, marginTop: spacing.lg }}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline' }}><Text style={{ flex: 1, color: t.ink, fontFamily: fonts.sansSemiBold }}>Bugünkü okuma hedefi</Text><Text style={{ color: t.gold, fontFamily: fonts.sansBold }}>{readToday}/{readingGoal} ayet</Text></View>
+      <View style={{ height: 5, borderRadius: 3, backgroundColor: t.surfaceAlt, marginTop: spacing.md }}><View style={{ width: `${goalPercent}%`, height: 5, borderRadius: 3, backgroundColor: t.gold }} /></View>
+      <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>{([5, 10, 20] as QuranReadingGoal[]).map((goal) => <Pressable key={goal} accessibilityRole="radio" accessibilityState={{ selected: readingGoal === goal }} onPress={() => setReadingGoal(goal)} style={{ flex: 1, borderRadius: radius.pill, paddingVertical: 7, alignItems: 'center', backgroundColor: readingGoal === goal ? t.gold : t.surfaceAlt }}><Text style={{ color: readingGoal === goal ? t.onGold : t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 11 }}>{goal} ayet</Text></Pressable>)}</View>
+    </View>
 
     <View style={{ marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.inner, paddingHorizontal: spacing.md }}>
       <Ionicons name="search-outline" size={18} color={t.inkFaint} />
