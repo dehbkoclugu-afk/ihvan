@@ -2,8 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { dayKey, nextStreak } from '@/lib/dates';
+import { isRitualComplete, type RitualStep } from '@/lib/ritual';
 
-export type RitualStep = 'ayah' | 'meaning' | 'dua' | 'dhikr';
+export type { RitualStep } from '@/lib/ritual';
 
 interface StreakState {
   count: number;
@@ -36,7 +37,7 @@ export const useStreakStore = create<StreakState>()(
         const current = state.doneDay === today ? state.doneSteps : [];
         const doneSteps = current.includes(step) ? current.filter((s) => s !== step) : [...current, step];
         set({ doneDay: today, doneSteps });
-        get().tickToday();
+        if (isRitualComplete(doneSteps)) get().tickToday();
       },
     }),
     { name: 'ihvan-streak', storage: createJSONStorage(() => AsyncStorage) },

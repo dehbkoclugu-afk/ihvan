@@ -39,3 +39,8 @@ export function nextStreak(
   if (lastTickDay === yesterdayKey(today)) return count + 1;
   return 1; // broken or first day
 }
+
+export function activeStreakCount(lastTickDay: string | null, count: number, today: Date = new Date()): number {
+  if (lastTickDay === dayKey(today) || lastTickDay === yesterdayKey(today)) return count;
+  return 0;
+}
