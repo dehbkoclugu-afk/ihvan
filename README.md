@@ -7,6 +7,8 @@
 - Daily ayah ritual and streak
 - Quran starter reader with Arabic-first presentation
 - Dua and dhikr practice
+- Foreground-location prayer times with the Adhan Turkey calculation method
+- Qibla bearing and optional live device compass
 - Private reflection journal
 - Vigil/Dawn themes
 - RevenueCat-ready subscription boundary
@@ -26,3 +28,5 @@ npx expo start
 ```
 
 RevenueCat runs in development mock mode until `EXPO_PUBLIC_REVENUECAT_IOS_KEY` / `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY` are configured.
+
+Prayer calculations use Adhan JS `CalculationMethod.Turkey()`, documented by its maintainers as an approximation of the Diyanet method. The app requests foreground location only and does not enable background location tracking.

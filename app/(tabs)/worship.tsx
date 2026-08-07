@@ -1,8 +1,12 @@
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
+import { PrayerTimesCard } from '@/components/PrayerTimesCard';
+import { QiblaCard } from '@/components/QiblaCard';
 import { dailyDua, DHIKR } from '@/data/duas';
 import { useTheme } from '@/hooks/useTheme';
+import { usePrayerLocation } from '@/hooks/usePrayerLocation';
 import { useDhikrStore } from '@/state/useDhikrStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
@@ -10,15 +14,18 @@ import { radius, spacing } from '@/theme/tokens';
 export default function Worship() {
   const t = useTheme();
   const { count, increment, reset } = useDhikrStore();
+  const { location, loading, error, requestLocation, refresh } = usePrayerLocation();
   const dua = dailyDua();
   return <Screen tabbed>
     <Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 32 }}>İbadet</Text>
+    <SectionHeader title="Namaz vakitleri" right={location ? <Pressable onPress={() => void refresh()}><Ionicons name="refresh" size={17} color={t.gold} /></Pressable> : undefined} />
+    {location ? <><PrayerTimesCard location={location} /><View style={{ marginTop: spacing.md }}><QiblaCard location={location} /></View></> : <View style={{ backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.card, padding: spacing.xl, alignItems: 'center' }}><View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: t.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="navigate-outline" size={23} color={t.gold} /></View><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 17, marginTop: spacing.md }}>Vakitleri ve kıbleyi aç</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: spacing.sm }}>Hesaplama için yalnızca uygulamayı kullanırken mevcut konumun gerekir. Arka planda konum takibi yapılmaz.</Text><Pressable disabled={loading} onPress={() => void requestLocation()} style={{ backgroundColor: t.gold, borderRadius: radius.pill, paddingHorizontal: spacing.xl, paddingVertical: 11, marginTop: spacing.lg }}>{loading ? <ActivityIndicator color={t.onGold} /> : <Text style={{ color: t.onGold, fontFamily: fonts.sansBold }}>Konumumu kullan</Text>}</Pressable>{error ? <Text style={{ color: t.danger, fontFamily: fonts.sans, fontSize: 11, textAlign: 'center', marginTop: spacing.sm }}>{error}</Text> : null}</View>}
     <SectionHeader title={dua.title} />
     <View style={{ backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.card, padding: spacing.xl }}><Text style={{ color: t.ink, fontSize: 30, lineHeight: 48, textAlign: 'right', writingDirection: 'rtl' }}>{dua.arabic}</Text><Text style={{ color: t.gold, fontFamily: fonts.sansSemiBold, marginTop: spacing.md }}>{dua.reference}</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.sm }}>Arapça metin: Tanzil Uthmani · Türkçe çeviri eklenmedi.</Text></View>
     <SectionHeader title="Zikir sayacı" right={<Pressable onPress={reset}><Text style={{ color: t.gold, fontFamily: fonts.sansSemiBold }}>Sıfırla</Text></Pressable>} />
     <Pressable onPress={increment} style={({ pressed }) => ({ height: 190, backgroundColor: t.goldSoft, borderRadius: radius.hero, borderWidth: 1, borderColor: t.gold, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 58 }}>{count}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sansMedium, marginTop: 6 }}>dokun ve say</Text></Pressable>
     <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>{DHIKR.map((item) => <View key={item.title} style={{ flex: 1, paddingVertical: spacing.md, backgroundColor: t.surface, borderRadius: radius.inner, alignItems: 'center' }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{item.title}</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: 2 }}>{item.target}</Text></View>)}</View>
-    <SectionHeader title="Yakında" />
-    <Text style={{ color: t.inkSoft, fontFamily: fonts.sans, lineHeight: 22 }}>Konuma göre namaz vakitleri, kıble ve sesli sûre deneyimi bu çekirdeğin sıradaki native katmanı.</Text>
+    <SectionHeader title="Sıradaki" />
+    <Text style={{ color: t.inkSoft, fontFamily: fonts.sans, lineHeight: 22 }}>Sesli sûre deneyimi ve vakit bildirimleri sıradaki native katman.</Text>
   </Screen>;
 }
