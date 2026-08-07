@@ -11,6 +11,9 @@ import { usePrayerLocation } from '@/hooks/usePrayerLocation';
 import { useDhikrStore } from '@/state/useDhikrStore';
 import { usePrayerSettingsStore } from '@/state/usePrayerSettingsStore';
 import { cancelPrayerNotifications, enablePrayerNotifications, refreshPrayerNotifications } from '@/services/prayerNotifications';
+import { dayKey } from '@/lib/dates';
+import { TRACKED_PRAYERS } from '@/lib/prayerTracking';
+import { usePrayerTrackingStore } from '@/state/usePrayerTrackingStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
 
@@ -19,9 +22,11 @@ export default function Worship() {
   const { count, increment, reset } = useDhikrStore();
   const { location, loading, error, requestLocation, refresh } = usePrayerLocation();
   const { notificationsEnabled, setNotificationsEnabled } = usePrayerSettingsStore();
+  const { completions, togglePrayer } = usePrayerTrackingStore();
   const [notificationBusy, setNotificationBusy] = useState(false);
   const [notificationError, setNotificationError] = useState<string | null>(null);
   const dua = dailyDua();
+  const completedPrayers = completions[dayKey()] ?? [];
 
   useEffect(() => {
     if (!location || !notificationsEnabled) return;
@@ -51,6 +56,11 @@ export default function Worship() {
 
   return <Screen tabbed>
     <Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 32 }}>İbadet</Text>
+    <SectionHeader title="Bugünkü namazlar" right={<Text style={{ color: t.inkSoft, fontFamily: fonts.sansMedium }}>{completedPrayers.length}/5</Text>} />
+    <View style={{ flexDirection: 'row', gap: spacing.sm }}>{TRACKED_PRAYERS.map((prayer) => {
+      const done = completedPrayers.includes(prayer.key);
+      return <Pressable key={prayer.key} accessibilityRole="checkbox" accessibilityState={{ checked: done }} accessibilityLabel={`${prayer.label} namazını kıldım`} onPress={() => togglePrayer(prayer.key)} style={({ pressed }) => ({ flex: 1, minWidth: 0, paddingVertical: spacing.md, borderRadius: radius.inner, borderWidth: 1, borderColor: done ? t.gold : t.border, backgroundColor: done ? t.goldSoft : t.surface, alignItems: 'center', opacity: pressed ? 0.75 : 1 })}><Ionicons name={done ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={done ? t.gold : t.inkFaint} /><Text numberOfLines={1} adjustsFontSizeToFit style={{ color: done ? t.gold : t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10, marginTop: 5 }}>{prayer.label}</Text></Pressable>;
+    })}</View>
     <SectionHeader title="Namaz vakitleri" right={location ? <Pressable onPress={() => void refresh()}><Ionicons name="refresh" size={17} color={t.gold} /></Pressable> : undefined} />
     {location ? <><PrayerTimesCard location={location} /><Pressable disabled={notificationBusy} onPress={() => void toggleNotifications()} style={{ marginTop: spacing.sm, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.inner, padding: spacing.md, flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}><Ionicons name={notificationsEnabled ? 'notifications' : 'notifications-outline'} size={19} color={notificationsEnabled ? t.gold : t.inkSoft} /><View style={{ flex: 1 }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 13 }}>Vakit bildirimleri</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 10, marginTop: 2 }}>{notificationsEnabled ? 'Açık · önümüzdeki 10 gün otomatik planlandı' : 'Kapalı · yalnızca istersen açılır'}</Text></View>{notificationBusy ? <ActivityIndicator size="small" color={t.gold} /> : <Text style={{ color: t.gold, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{notificationsEnabled ? 'Kapat' : 'Aç'}</Text>}</Pressable>{notificationError ? <Text style={{ color: t.danger, fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.sm }}>{notificationError}</Text> : null}<View style={{ marginTop: spacing.md }}><QiblaCard location={location} /></View></> : <View style={{ backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.card, padding: spacing.xl, alignItems: 'center' }}><View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: t.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="navigate-outline" size={23} color={t.gold} /></View><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 17, marginTop: spacing.md }}>Vakitleri ve kıbleyi aç</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: spacing.sm }}>Hesaplama için yalnızca uygulamayı kullanırken mevcut konumun gerekir. Arka planda konum takibi yapılmaz.</Text><Pressable disabled={loading} onPress={() => void requestLocation()} style={{ backgroundColor: t.gold, borderRadius: radius.pill, paddingHorizontal: spacing.xl, paddingVertical: 11, marginTop: spacing.lg }}>{loading ? <ActivityIndicator color={t.onGold} /> : <Text style={{ color: t.onGold, fontFamily: fonts.sansBold }}>Konumumu kullan</Text>}</Pressable>{error ? <Text style={{ color: t.danger, fontFamily: fonts.sans, fontSize: 11, textAlign: 'center', marginTop: spacing.sm }}>{error}</Text> : null}</View>}
     <SectionHeader title={dua.title} />
