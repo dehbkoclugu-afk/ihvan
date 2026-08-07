@@ -5,7 +5,7 @@
 ## MVP loop
 
 - Daily ayah ritual and streak
-- Full Arabic-first Quran reader with direct ayah navigation, bookmarks and last-read progress
+- Full Arabic-first Quran reader with 114-surah / 30-juz navigation, direct ayah navigation, bookmarks and last-read progress
 - Dua and dhikr practice
 - Foreground-location prayer times with the Adhan Turkey calculation method
 - Qibla bearing and optional live device compass

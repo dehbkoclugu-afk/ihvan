@@ -29,6 +29,7 @@ export default function RootLayout() {
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.bg } }}>
       <Stack.Screen name="paywall" options={{ presentation: 'modal' }} />
       <Stack.Screen name="surah/[id]" options={{ presentation: 'card' }} />
+      <Stack.Screen name="juz/[id]" options={{ presentation: 'card' }} />
     </Stack>
   </GestureHandlerRootView>;
 }

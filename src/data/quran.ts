@@ -1,15 +1,18 @@
 import {
   QURAN_AYAHS,
+  QURAN_JUZS,
   QURAN_SURAHS,
   getAyah,
+  getJuzAyahs,
   getSurahAyahs,
   type QuranAyah,
+  type QuranJuz,
   type QuranSurah,
 } from './quran.generated';
 import { positionPercent } from '../lib/quranProgress';
 
-export { QURAN_AYAHS, QURAN_SURAHS, getAyah, getSurahAyahs };
-export type { QuranAyah, QuranSurah };
+export { QURAN_AYAHS, QURAN_JUZS, QURAN_SURAHS, getAyah, getJuzAyahs, getSurahAyahs };
+export type { QuranAyah, QuranJuz, QuranSurah };
 
 export interface DailyAyah extends QuranAyah {
   id: string;

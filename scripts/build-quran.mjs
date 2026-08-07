@@ -6,6 +6,7 @@ const META_SOURCE = new URL('../vendor/tanzil-quran-data.xml', import.meta.url);
 const OUTPUT = new URL('../src/data/quran.generated.ts', import.meta.url);
 const EXPECTED_AYAH_COUNT = 6236;
 const EXPECTED_SURAH_COUNT = 114;
+const EXPECTED_JUZ_COUNT = 30;
 
 function decodeXml(value) {
   return value
@@ -59,6 +60,31 @@ for (const surah of surahs) {
   }
 }
 
+const juzTags = rawMeta.match(/<juz index="\d+"[^>]*\/>/g) ?? [];
+if (juzTags.length !== EXPECTED_JUZ_COUNT) {
+  throw new Error(`Expected ${EXPECTED_JUZ_COUNT} juzs, found ${juzTags.length}`);
+}
+
+const juzStarts = juzTags.map((tag) => {
+  const id = Number(attribute(tag, 'index'));
+  const startSurah = Number(attribute(tag, 'sura'));
+  const startAyah = Number(attribute(tag, 'aya'));
+  const surah = surahs[startSurah - 1];
+  if (!surah || startAyah < 1 || startAyah > surah.ayahCount) {
+    throw new Error(`Juz ${id}: invalid start ${startSurah}:${startAyah}`);
+  }
+  return { id, start: surah.start + startAyah - 1, startSurah, startAyah };
+});
+
+const juzs = juzStarts.map((juz, index) => ({
+  ...juz,
+  ayahCount: (juzStarts[index + 1]?.start ?? ayahs.length) - juz.start,
+}));
+
+if (juzs.reduce((sum, juz) => sum + juz.ayahCount, 0) !== EXPECTED_AYAH_COUNT) {
+  throw new Error('Juz boundaries do not cover the complete Quran');
+}
+
 const textSha256 = createHash('sha256').update(ayahLines.join('\n'), 'utf8').digest('hex');
 const notice = rawText.split(/\r?\n/).filter((line) => line.startsWith('#')).join('\n');
 
@@ -71,10 +97,12 @@ const generated = `/**
 
 export interface QuranAyah { surah: number; ayah: number; text: string }
 export interface QuranSurah { id: number; ayahCount: number; start: number; arabicName: string; transliteration: string; revelationPlace: 'meccan' | 'medinan' }
+export interface QuranJuz { id: number; start: number; startSurah: number; startAyah: number; ayahCount: number }
 
 export const TANZIL_TEXT_SHA256 = ${JSON.stringify(textSha256)};
 export const TANZIL_NOTICE = ${JSON.stringify(notice)};
 export const QURAN_SURAHS: QuranSurah[] = ${JSON.stringify(surahs)};
+export const QURAN_JUZS: QuranJuz[] = ${JSON.stringify(juzs)};
 export const QURAN_AYAHS: QuranAyah[] = ${JSON.stringify(ayahs)};
 
 export function getSurahAyahs(surahId: number): QuranAyah[] {
@@ -88,7 +116,13 @@ export function getAyah(surah: number, ayah: number): QuranAyah | undefined {
   if (!meta || ayah < 1 || ayah > meta.ayahCount) return undefined;
   return QURAN_AYAHS[meta.start + ayah - 1];
 }
+
+export function getJuzAyahs(juzId: number): QuranAyah[] {
+  const juz = QURAN_JUZS[juzId - 1];
+  if (!juz || juz.id !== juzId) return [];
+  return QURAN_AYAHS.slice(juz.start, juz.start + juz.ayahCount);
+}
 `;
 
 await writeFile(OUTPUT, generated, 'utf8');
-console.log(`Generated ${ayahs.length} ayahs / ${surahs.length} surahs / sha256 ${textSha256}`);
+console.log(`Generated ${ayahs.length} ayahs / ${surahs.length} surahs / ${juzs.length} juzs / sha256 ${textSha256}`);

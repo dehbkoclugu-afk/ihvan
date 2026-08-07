@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
-import { QURAN_SURAHS, getAyah, mushafPositionPercent } from '@/data/quran';
+import { QURAN_JUZS, QURAN_SURAHS, getAyah, mushafPositionPercent } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { fonts } from '@/theme/typography';
@@ -17,6 +17,7 @@ function openAyah(surah: number, ayah: number) {
 export default function Quran() {
   const t = useTheme();
   const [query, setQuery] = useState('');
+  const [browseMode, setBrowseMode] = useState<'surahs' | 'juzs'>('surahs');
   const { lastRead, bookmarks } = useQuranProgressStore();
   const verseMatch = query.trim().match(/^(\d{1,3})\s*:\s*(\d{1,3})$/);
   const directAyah = verseMatch ? getAyah(Number(verseMatch[1]), Number(verseMatch[2])) : undefined;
@@ -56,6 +57,11 @@ export default function Quran() {
       return <Pressable key={`${ayah.surah}:${ayah.ayah}`} onPress={() => openAyah(ayah.surah, ayah.ayah)} style={{ backgroundColor: t.surface, borderRadius: radius.inner, padding: spacing.md, flexDirection: 'row', alignItems: 'center' }}><Ionicons name="bookmark" size={16} color={t.gold} /><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, marginLeft: spacing.sm, flex: 1 }}>{surah.transliteration} · {ayah.surah}:{ayah.ayah}</Text><Ionicons name="chevron-forward" size={16} color={t.inkFaint} /></Pressable>;
     })}</View></> : null}
 
+    <View style={{ flexDirection: 'row', backgroundColor: t.surface, borderRadius: radius.pill, padding: 4, marginTop: spacing.xl }}>
+      {([['surahs', 'Sûreler'], ['juzs', 'Cüzler']] as const).map(([mode, label]) => <Pressable key={mode} onPress={() => { setBrowseMode(mode); if (mode === 'juzs') setQuery(''); }} style={{ flex: 1, borderRadius: radius.pill, paddingVertical: 9, alignItems: 'center', backgroundColor: browseMode === mode ? t.gold : 'transparent' }}><Text style={{ color: browseMode === mode ? t.onGold : t.inkSoft, fontFamily: fonts.sansSemiBold }}>{label}</Text></Pressable>)}
+    </View>
+
+    {browseMode === 'surahs' ? <>
     <SectionHeader title={query && !verseMatch ? `${surahs.length} sonuç` : 'Tüm sûreler'} />
     <View style={{ gap: spacing.sm }}>{surahs.map((surah) => <Pressable key={surah.id} onPress={() => router.push({ pathname: '/surah/[id]', params: { id: `${surah.id}` } })} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', padding: spacing.lg, borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.inner, opacity: pressed ? 0.75 : 1 })}>
       <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: t.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: t.gold, fontFamily: fonts.sansBold }}>{surah.id}</Text></View>
@@ -63,6 +69,17 @@ export default function Quran() {
       <Text style={{ color: t.ink, fontSize: 20, writingDirection: 'rtl' }}>{surah.arabicName}</Text><Ionicons name="chevron-forward" size={17} color={t.inkFaint} style={{ marginLeft: spacing.sm }} />
     </Pressable>)}</View>
     {!surahs.length ? <Text style={{ color: t.inkSoft, textAlign: 'center', fontFamily: fonts.sans, marginVertical: spacing.xl }}>Sûre bulunamadı.</Text> : null}
+    </> : <>
+      <SectionHeader title="30 cüz" />
+      <View style={{ gap: spacing.sm }}>{QURAN_JUZS.map((juz) => {
+        const startSurah = QURAN_SURAHS[juz.startSurah - 1];
+        return <Pressable key={juz.id} onPress={() => router.push({ pathname: '/juz/[id]', params: { id: `${juz.id}` } })} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', padding: spacing.lg, borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.inner, opacity: pressed ? 0.75 : 1 })}>
+          <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: t.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: t.gold, fontFamily: fonts.sansBold }}>{juz.id}</Text></View>
+          <View style={{ flex: 1, marginLeft: spacing.md }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 16 }}>{juz.id}. Cüz</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, marginTop: 2 }}>{startSurah.transliteration} · {juz.startSurah}:{juz.startAyah} · {juz.ayahCount} ayet</Text></View>
+          <Ionicons name="chevron-forward" size={17} color={t.inkFaint} />
+        </Pressable>;
+      })}</View>
+    </>}
     <Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, textAlign: 'center', marginTop: spacing.xl }}>Arapça Kur’an metni: Tanzil Project · tanzil.net · CC BY 3.0 · verbatim</Text>
   </Screen>;
 }
