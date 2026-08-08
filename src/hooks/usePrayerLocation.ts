@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import * as Location from 'expo-location';
+import { AppState, Linking } from 'react-native';
 
 export interface PrayerLocation {
   latitude: number;
@@ -16,6 +17,7 @@ function addressLabel(address?: Location.LocationGeocodedAddress): string {
 export function usePrayerLocation() {
   const [location, setLocation] = useState<PrayerLocation | null>(null);
   const [permission, setPermission] = useState<Location.PermissionStatus | null>(null);
+  const [canAskAgain, setCanAskAgain] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,23 +41,40 @@ export function usePrayerLocation() {
     }
   }, []);
 
-  useEffect(() => {
-    void Location.getForegroundPermissionsAsync().then((result) => {
-      setPermission(result.status);
-      if (result.status === Location.PermissionStatus.GRANTED) void loadLocation();
-    });
+  const syncPermission = useCallback(async () => {
+    const result = await Location.getForegroundPermissionsAsync();
+    setPermission(result.status);
+    setCanAskAgain(result.canAskAgain);
+    if (result.status === Location.PermissionStatus.GRANTED) await loadLocation();
   }, [loadLocation]);
+
+  useEffect(() => {
+    void syncPermission();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void syncPermission();
+    });
+    return () => subscription.remove();
+  }, [syncPermission]);
+
+  const openLocationSettings = useCallback(async () => {
+    try {
+      await Linking.openSettings();
+    } catch {
+      setError('Sistem ayarları açılamadı. İhvan için konum iznini cihaz ayarlarından açabilirsin.');
+    }
+  }, []);
 
   const requestLocation = useCallback(async () => {
     setError(null);
     const result = await Location.requestForegroundPermissionsAsync();
-    setPermission(result.status);
+      setPermission(result.status);
+    setCanAskAgain(result.canAskAgain);
     if (result.status !== Location.PermissionStatus.GRANTED) {
-      setError('Namaz vakitleri ve kıble için konum izni gerekli.');
+      setError(result.canAskAgain ? 'Namaz vakitleri ve kıble için konum izni gerekli.' : 'Konum izni kapalı. İzni cihaz ayarlarından açabilirsin.');
       return;
     }
     await loadLocation();
   }, [loadLocation]);
 
-  return { location, permission, loading, error, requestLocation, refresh: loadLocation };
+  return { location, permission, canAskAgain, loading, error, requestLocation, openLocationSettings, refresh: loadLocation };
 }
