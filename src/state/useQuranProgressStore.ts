@@ -20,6 +20,7 @@ interface QuranProgressState {
   markAyahRead: (surah: number, ayah: number, date?: Date) => void;
   setReadingGoal: (goal: QuranReadingGoal) => void;
   toggleBookmark: (surah: number, ayah: number) => void;
+  clearProgress: () => void;
 }
 
 const keyFor = (surah: number, ayah: number) => `${surah}:${ayah}`;
@@ -53,6 +54,7 @@ export const useQuranProgressStore = create<QuranProgressState>()(
         const key = keyFor(surah, ayah);
         return { bookmarks: state.bookmarks.includes(key) ? state.bookmarks.filter((item) => item !== key) : [key, ...state.bookmarks] };
       }),
+      clearProgress: () => set({ lastRead: null, bookmarks: [], readingDays: {}, readAyahs: [] }),
     }),
     { name: 'ihvan-quran-progress', storage: createJSONStorage(() => AsyncStorage) },
   ),

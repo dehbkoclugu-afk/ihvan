@@ -7,6 +7,7 @@ import { prunePrayerCompletions, type PrayerCompletions, type TrackedPrayerKey }
 interface PrayerTrackingState {
   completions: PrayerCompletions;
   togglePrayer: (prayer: TrackedPrayerKey, date?: Date) => void;
+  clearTracking: () => void;
 }
 
 export const usePrayerTrackingStore = create<PrayerTrackingState>()(
@@ -19,6 +20,7 @@ export const usePrayerTrackingStore = create<PrayerTrackingState>()(
         const next = current.includes(prayer) ? current.filter((item) => item !== prayer) : [...current, prayer];
         return { completions: prunePrayerCompletions({ ...state.completions, [key]: next }, 90, date) };
       }),
+      clearTracking: () => set({ completions: {} }),
     }),
     { name: 'ihvan-prayer-tracking', storage: createJSONStorage(() => AsyncStorage) },
   ),
