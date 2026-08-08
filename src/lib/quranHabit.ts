@@ -2,6 +2,7 @@ import { dayKey } from './dates.ts';
 
 export type QuranReadingDays = Record<string, string[]>;
 export type QuranReadingGoal = 5 | 10 | 20;
+export type QuranProgressFilter = 'all' | 'incomplete' | 'complete';
 
 export function mergeQuranReadAyahs(readAyahs: readonly string[] | undefined, readingDays: QuranReadingDays, ayahKey?: string): string[] {
   const keys = new Set(readAyahs ?? []);
@@ -21,6 +22,12 @@ export function quranReadingCoverage(readAyahs: readonly string[] | undefined, r
     total,
     percent: total ? Math.round((boundedRead / total) * 1000) / 10 : 0,
   };
+}
+
+export function quranProgressFilterMatches(readCount: number, totalCount: number, filter: QuranProgressFilter): boolean {
+  if (filter === 'all') return true;
+  const complete = totalCount > 0 && readCount >= totalCount;
+  return filter === 'complete' ? complete : !complete;
 }
 
 export function quranSurahReadCounts(

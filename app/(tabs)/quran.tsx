@@ -6,7 +6,7 @@ import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { QURAN_AYAHS, QURAN_JUZS, QURAN_SURAHS, getAyah, mushafPositionPercent } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
-import { quranGoalPercent, quranNextUnreadKey, quranReadCount, quranReadingCoverage, quranReadingStreak, quranSectionReadCounts, quranSurahReadCounts, type QuranReadingGoal } from '@/lib/quranHabit';
+import { quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranSectionReadCounts, quranSurahReadCounts, type QuranProgressFilter, type QuranReadingGoal } from '@/lib/quranHabit';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
@@ -22,6 +22,7 @@ export default function Quran() {
   const t = useTheme();
   const [query, setQuery] = useState('');
   const [browseMode, setBrowseMode] = useState<'surahs' | 'juzs'>('surahs');
+  const [progressFilter, setProgressFilter] = useState<QuranProgressFilter>('all');
   const { lastRead, bookmarks, readingDays, readAyahs, readingGoal, setReadingGoal } = useQuranProgressStore();
   const readToday = quranReadCount(readingDays);
   const goalPercent = quranGoalPercent(readToday, readingGoal);
@@ -44,6 +45,8 @@ export default function Quran() {
       `${surah.id} ${surah.transliteration} ${surah.arabicName}`.toLocaleLowerCase('tr-TR').includes(needle),
     );
   }, [query, verseMatch]);
+  const visibleSurahs = useMemo(() => surahs.filter((surah) => quranProgressFilterMatches(surahReadCounts[surah.id] ?? 0, surah.ayahCount, progressFilter)), [progressFilter, surahReadCounts, surahs]);
+  const visibleJuzs = useMemo(() => QURAN_JUZS.filter((juz) => quranProgressFilterMatches(juzReadCounts[juz.id] ?? 0, juz.ayahCount, progressFilter)), [juzReadCounts, progressFilter]);
   const lastSurah = lastRead ? QURAN_SURAHS[lastRead.surah - 1] : undefined;
 
   return <Screen tabbed>
@@ -81,19 +84,20 @@ export default function Quran() {
     <View style={{ flexDirection: 'row', backgroundColor: t.surface, borderRadius: radius.pill, padding: 4, marginTop: spacing.xl }}>
       {([['surahs', 'Sûreler'], ['juzs', 'Cüzler']] as const).map(([mode, label]) => <Pressable key={mode} onPress={() => { setBrowseMode(mode); if (mode === 'juzs') setQuery(''); }} style={{ flex: 1, borderRadius: radius.pill, paddingVertical: 9, alignItems: 'center', backgroundColor: browseMode === mode ? t.gold : 'transparent' }}><Text style={{ color: browseMode === mode ? t.onGold : t.inkSoft, fontFamily: fonts.sansSemiBold }}>{label}</Text></Pressable>)}
     </View>
+    <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>{([['all', 'Tümü'], ['incomplete', 'Eksik'], ['complete', 'Tamamlanan']] as const).map(([filter, label]) => <Pressable key={filter} accessibilityRole="radio" accessibilityState={{ selected: progressFilter === filter }} onPress={() => setProgressFilter(filter)} style={{ flex: 1, alignItems: 'center', borderRadius: radius.pill, paddingVertical: 8, backgroundColor: progressFilter === filter ? t.goldSoft : t.surface }}><Text style={{ color: progressFilter === filter ? t.gold : t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10 }}>{label}</Text></Pressable>)}</View>
 
     {browseMode === 'surahs' ? <>
-    <SectionHeader title={query && !verseMatch ? `${surahs.length} sonuç` : 'Tüm sûreler'} />
-    <View style={{ gap: spacing.sm }}>{surahs.map((surah) => <Pressable key={surah.id} accessibilityRole="button" accessibilityLabel={`${surah.transliteration}, ${surahReadCounts[surah.id] ?? 0} / ${surah.ayahCount} ayet okundu`} onPress={() => router.push({ pathname: '/surah/[id]', params: { id: `${surah.id}` } })} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', padding: spacing.lg, borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.inner, opacity: pressed ? 0.75 : 1 })}>
+    <SectionHeader title={progressFilter === 'incomplete' ? `Eksik sûreler · ${visibleSurahs.length}` : progressFilter === 'complete' ? `Tamamlanan sûreler · ${visibleSurahs.length}` : query && !verseMatch ? `${visibleSurahs.length} sonuç` : 'Tüm sûreler'} />
+    <View style={{ gap: spacing.sm }}>{visibleSurahs.map((surah) => <Pressable key={surah.id} accessibilityRole="button" accessibilityLabel={`${surah.transliteration}, ${surahReadCounts[surah.id] ?? 0} / ${surah.ayahCount} ayet okundu`} onPress={() => router.push({ pathname: '/surah/[id]', params: { id: `${surah.id}` } })} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', padding: spacing.lg, borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.inner, opacity: pressed ? 0.75 : 1 })}>
       <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: t.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: t.gold, fontFamily: fonts.sansBold }}>{surah.id}</Text></View>
       <View style={{ flex: 1, marginLeft: spacing.md }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 16 }}>{surah.transliteration}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, marginTop: 2 }}>{surah.revelationPlace === 'meccan' ? 'Mekke' : 'Medine'} · {surah.ayahCount} ayet{surahReadCounts[surah.id] ? ` · ${surahReadCounts[surah.id]}/${surah.ayahCount} okundu` : ''}</Text></View>
       {surahReadCounts[surah.id] === surah.ayahCount ? <Ionicons name="checkmark-circle" size={18} color={t.gold} style={{ marginRight: spacing.xs }} /> : null}
       <Text style={{ color: t.ink, fontSize: 20, writingDirection: 'rtl' }}>{surah.arabicName}</Text><Ionicons name="chevron-forward" size={17} color={t.inkFaint} style={{ marginLeft: spacing.sm }} />
     </Pressable>)}</View>
-    {!surahs.length ? <Text style={{ color: t.inkSoft, textAlign: 'center', fontFamily: fonts.sans, marginVertical: spacing.xl }}>Sûre bulunamadı.</Text> : null}
+    {!visibleSurahs.length ? <Text style={{ color: t.inkSoft, textAlign: 'center', fontFamily: fonts.sans, marginVertical: spacing.xl }}>{query && !verseMatch ? 'Sûre bulunamadı.' : 'Bu filtrede sûre yok.'}</Text> : null}
     </> : <>
-      <SectionHeader title="30 cüz" />
-      <View style={{ gap: spacing.sm }}>{QURAN_JUZS.map((juz) => {
+      <SectionHeader title={progressFilter === 'incomplete' ? `Eksik cüzler · ${visibleJuzs.length}` : progressFilter === 'complete' ? `Tamamlanan cüzler · ${visibleJuzs.length}` : '30 cüz'} />
+      <View style={{ gap: spacing.sm }}>{visibleJuzs.map((juz) => {
         const startSurah = QURAN_SURAHS[juz.startSurah - 1];
         return <Pressable key={juz.id} accessibilityRole="button" accessibilityLabel={`${juz.id}. Cüz, ${juzReadCounts[juz.id] ?? 0} / ${juz.ayahCount} ayet okundu`} onPress={() => router.push({ pathname: '/juz/[id]', params: { id: `${juz.id}` } })} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', padding: spacing.lg, borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.inner, opacity: pressed ? 0.75 : 1 })}>
           <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: t.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: t.gold, fontFamily: fonts.sansBold }}>{juz.id}</Text></View>
@@ -102,6 +106,7 @@ export default function Quran() {
           <Ionicons name="chevron-forward" size={17} color={t.inkFaint} />
         </Pressable>;
       })}</View>
+      {!visibleJuzs.length ? <Text style={{ color: t.inkSoft, textAlign: 'center', fontFamily: fonts.sans, marginVertical: spacing.xl }}>Bu filtrede cüz yok.</Text> : null}
     </>}
     <Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, textAlign: 'center', marginTop: spacing.xl }}>Arapça Kur’an metni: Tanzil Project · tanzil.net · CC BY 3.0 · verbatim</Text>
   </Screen>;
