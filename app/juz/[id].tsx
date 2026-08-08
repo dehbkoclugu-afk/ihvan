@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
+import { QuranTextSizeControl } from '@/components/QuranTextSizeControl';
 import { Screen } from '@/components/Screen';
 import { QURAN_JUZS, QURAN_SURAHS, getJuzAyahs } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
@@ -24,11 +25,14 @@ export default function JuzDetail() {
   const readKeys = new Set(mergeQuranReadAyahs(readAyahs, readingDays));
   const readCount = ayahs.reduce((count, ayah) => count + Number(readKeys.has(`${ayah.surah}:${ayah.ayah}`)), 0);
   const progress = juz.ayahCount ? Math.round((readCount / juz.ayahCount) * 100) : 0;
+  const previousJuz = QURAN_JUZS[juzId - 2];
+  const nextJuz = QURAN_JUZS[juzId];
 
   return <Screen>
     <Pressable onPress={() => router.back()} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="arrow-back" size={20} color={t.ink} /></Pressable>
     <View style={{ alignItems: 'center', marginTop: spacing.xl }}><Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 30 }}>{juz.id}. Cüz</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, marginTop: 5 }}>{juz.ayahCount} ayet · başlangıç {juz.startSurah}:{juz.startAyah}</Text></View>
     <View style={{ backgroundColor: t.surface, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.lg }}><View style={{ flexDirection: 'row', alignItems: 'center' }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>Cüz ilerlemesi</Text><Text style={{ color: t.gold, fontFamily: fonts.sansBold, fontSize: 12, marginLeft: 'auto' }}>{readCount}/{juz.ayahCount} · %{progress}</Text></View><View style={{ height: 5, borderRadius: 3, backgroundColor: t.surfaceAlt, marginTop: spacing.sm }}><View style={{ width: `${progress}%`, height: 5, borderRadius: 3, backgroundColor: t.gold }} /></View></View>
+    <QuranTextSizeControl />
     <View style={{ backgroundColor: t.goldSoft, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.xl }}><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18 }}>Cüz sınırları Tanzil metadata’sından alınır. Kur’an metni değiştirilmeden gösterilir; makine/AI çevirisi kullanılmaz.</Text></View>
     {ayahs.map((ayah, index) => {
       const key = `${ayah.surah}:${ayah.ayah}`;
@@ -51,6 +55,10 @@ export default function JuzDetail() {
         </View>
       </View>;
     })}
+    <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl }}>
+      {previousJuz ? <Pressable accessibilityRole="button" accessibilityLabel={`Önceki cüz: ${previousJuz.id}`} onPress={() => router.push({ pathname: '/juz/[id]', params: { id: `${previousJuz.id}` } })} style={({ pressed }) => ({ flex: 1, minHeight: 58, paddingHorizontal: spacing.md, borderRadius: radius.inner, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}><View style={{ flexDirection: 'row', alignItems: 'center' }}><Ionicons name="chevron-back" size={18} color={t.gold} /><View style={{ marginLeft: spacing.xs }}><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 10 }}>Önceki cüz</Text><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12, marginTop: 2 }}>{previousJuz.id}. Cüz</Text></View></View></Pressable> : <View style={{ flex: 1 }} />}
+      {nextJuz ? <Pressable accessibilityRole="button" accessibilityLabel={`Sonraki cüz: ${nextJuz.id}`} onPress={() => router.push({ pathname: '/juz/[id]', params: { id: `${nextJuz.id}` } })} style={({ pressed }) => ({ flex: 1, minHeight: 58, paddingHorizontal: spacing.md, borderRadius: radius.inner, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}><View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' }}><View style={{ marginRight: spacing.xs, alignItems: 'flex-end' }}><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 10 }}>Sonraki cüz</Text><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12, marginTop: 2 }}>{nextJuz.id}. Cüz</Text></View><Ionicons name="chevron-forward" size={18} color={t.gold} /></View></Pressable> : <View style={{ flex: 1 }} />}
+    </View>
     <Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, textAlign: 'center', marginVertical: spacing.xl }}>Kaynak: Tanzil Project · Uthmani Quran Text + Quran metadata · CC BY 3.0</Text>
   </Screen>;
 }

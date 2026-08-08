@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useRef } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { QuranTextSizeControl } from '@/components/QuranTextSizeControl';
 import { Screen } from '@/components/Screen';
 import { QURAN_SURAHS, getSurahAyahs } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
@@ -27,11 +28,14 @@ export default function SurahDetail() {
   const readKeys = new Set(mergeQuranReadAyahs(readAyahs, readingDays));
   const readCount = ayahs.reduce((count, ayah) => count + Number(readKeys.has(`${ayah.surah}:${ayah.ayah}`)), 0);
   const progress = surah.ayahCount ? Math.round((readCount / surah.ayahCount) * 100) : 0;
+  const previousSurah = QURAN_SURAHS[surahId - 2];
+  const nextSurah = QURAN_SURAHS[surahId];
 
   return <Screen scrollRef={scrollRef}>
     <Pressable onPress={() => router.back()} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="arrow-back" size={20} color={t.ink} /></Pressable>
     <View style={{ alignItems: 'center', marginTop: spacing.xl }}><Text style={{ color: t.ink, fontSize: 34, writingDirection: 'rtl' }}>{surah.arabicName}</Text><Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 30, marginTop: spacing.sm }}>{surah.transliteration}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, marginTop: 5 }}>{surah.revelationPlace === 'meccan' ? 'Mekke' : 'Medine'} · {surah.ayahCount} ayet</Text></View>
     <View style={{ backgroundColor: t.surface, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.lg }}><View style={{ flexDirection: 'row', alignItems: 'center' }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>Sûre ilerlemesi</Text><Text style={{ color: t.gold, fontFamily: fonts.sansBold, fontSize: 12, marginLeft: 'auto' }}>{readCount}/{surah.ayahCount} · %{progress}</Text></View><View style={{ height: 5, borderRadius: 3, backgroundColor: t.surfaceAlt, marginTop: spacing.sm }}><View style={{ width: `${progress}%`, height: 5, borderRadius: 3, backgroundColor: t.gold }} /></View></View>
+    <QuranTextSizeControl />
     <View style={{ backgroundColor: t.goldSoft, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.xl }}><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18 }}>Şimdilik yalnızca doğrulanmış Arapça metin gösteriliyor. Meal ve tefsir için makine çevirisi kullanılmayacak.</Text></View>
     {ayahs.map((ayah, index) => {
       const key = `${ayah.surah}:${ayah.ayah}`;
@@ -54,6 +58,10 @@ export default function SurahDetail() {
         <Text selectable style={{ color: t.ink, fontSize: metrics.fontSize, lineHeight: metrics.lineHeight, textAlign: 'right', writingDirection: 'rtl', marginTop: spacing.md }}>{ayah.text}</Text>
       </View>;
     })}
+    <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl }}>
+      {previousSurah ? <Pressable accessibilityRole="button" accessibilityLabel={`Önceki sûre: ${previousSurah.transliteration}`} onPress={() => router.push({ pathname: '/surah/[id]', params: { id: `${previousSurah.id}` } })} style={({ pressed }) => ({ flex: 1, minHeight: 58, paddingHorizontal: spacing.md, borderRadius: radius.inner, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}><View style={{ flexDirection: 'row', alignItems: 'center' }}><Ionicons name="chevron-back" size={18} color={t.gold} /><View style={{ marginLeft: spacing.xs, flex: 1 }}><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 10 }}>Önceki sûre</Text><Text numberOfLines={1} style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12, marginTop: 2 }}>{previousSurah.transliteration}</Text></View></View></Pressable> : <View style={{ flex: 1 }} />}
+      {nextSurah ? <Pressable accessibilityRole="button" accessibilityLabel={`Sonraki sûre: ${nextSurah.transliteration}`} onPress={() => router.push({ pathname: '/surah/[id]', params: { id: `${nextSurah.id}` } })} style={({ pressed }) => ({ flex: 1, minHeight: 58, paddingHorizontal: spacing.md, borderRadius: radius.inner, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}><View style={{ flexDirection: 'row', alignItems: 'center' }}><View style={{ marginRight: spacing.xs, flex: 1, alignItems: 'flex-end' }}><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 10 }}>Sonraki sûre</Text><Text numberOfLines={1} style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12, marginTop: 2 }}>{nextSurah.transliteration}</Text></View><Ionicons name="chevron-forward" size={18} color={t.gold} /></View></Pressable> : <View style={{ flex: 1 }} />}
+    </View>
     <Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, textAlign: 'center', marginVertical: spacing.xl }}>Kaynak: Tanzil Project · Uthmani Quran Text · CC BY 3.0</Text>
   </Screen>;
 }
