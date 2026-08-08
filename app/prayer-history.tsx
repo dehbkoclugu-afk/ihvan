@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { useTheme } from '@/hooks/useTheme';
-import { prayerCompletionPercent, prayerPercentFor, recentDayKeys, TRACKED_PRAYERS } from '@/lib/prayerTracking';
+import { prayerCompletionPercent, prayerCompletionStreak, prayerPercentFor, recentDayKeys, TRACKED_PRAYERS } from '@/lib/prayerTracking';
 import { usePrayerTrackingStore } from '@/state/usePrayerTrackingStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
@@ -19,6 +19,7 @@ export default function PrayerHistory() {
   const t = useTheme();
   const { completions, togglePrayer } = usePrayerTrackingStore();
   const days = recentDayKeys(HISTORY_DAYS);
+  const streak = prayerCompletionStreak(completions);
   const formatDay = new Intl.DateTimeFormat('tr-TR', { weekday: 'short', day: 'numeric', month: 'short' });
 
   return <Screen>
@@ -29,6 +30,8 @@ export default function PrayerHistory() {
     <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xl }}>
       {[7, 30, 90].map((period) => <View key={period} style={{ flex: 1, backgroundColor: t.surface, borderRadius: radius.inner, paddingVertical: spacing.lg, alignItems: 'center' }}><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 25 }}>%{prayerCompletionPercent(completions, period)}</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sansMedium, fontSize: 10, marginTop: 3 }}>{period} GÜN</Text></View>)}
     </View>
+
+    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: t.goldSoft, borderRadius: radius.inner, padding: spacing.lg, marginTop: spacing.md }}><Ionicons name="flame" size={22} color={t.gold} /><View style={{ marginLeft: spacing.sm, flex: 1 }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold }}>5/5 namaz serisi</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 11, marginTop: 2 }}>Yalnız beş vaktin tamamlandığı günler</Text></View><View style={{ alignItems: 'flex-end' }}><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 24 }}>{streak.current} gün</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 9 }}>90 günde en iyi {streak.best}</Text></View></View>
 
     <Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 17, marginTop: spacing.xxl }}>Son 30 gün · vakit bazında</Text>
     <View style={{ flexDirection: 'row', gap: spacing.xs, marginTop: spacing.md }}>{TRACKED_PRAYERS.map((prayer) => <View key={prayer.key} style={{ flex: 1, backgroundColor: t.surface, borderRadius: radius.inner, paddingVertical: spacing.md, alignItems: 'center' }}><Text numberOfLines={1} adjustsFontSizeToFit style={{ color: t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10 }}>{prayer.label}</Text><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 20, marginTop: 3 }}>%{prayerPercentFor(completions, prayer.key, 30)}</Text></View>)}</View>
