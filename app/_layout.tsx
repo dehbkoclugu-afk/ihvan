@@ -31,6 +31,7 @@ export default function RootLayout() {
       <Stack.Screen name="juz/[id]" options={{ presentation: 'card' }} />
       <Stack.Screen name="prayer-history" options={{ presentation: 'card' }} />
       <Stack.Screen name="bookmarks" options={{ presentation: 'card' }} />
+      <Stack.Screen name="quran-history" options={{ presentation: 'card' }} />
     </Stack>
   </GestureHandlerRootView>;
 }
