@@ -67,7 +67,7 @@ export default function Profile() {
       prayerTracking: { completions: prayer.completions },
       quranProgress: { lastRead: quran.lastRead, bookmarks: quran.bookmarks, readingDays: quran.readingDays, readAyahs: quran.readAyahs, readingGoal: quran.readingGoal },
       journal: { entries: journal.entries },
-      dhikr: { day: dhikr.day, count: dhikr.count },
+      dhikr: { day: dhikr.day, count: dhikr.count, history: dhikr.history ?? {} },
       ritual: { count: ritual.count, bestCount: ritual.bestCount, lastTickDay: ritual.lastTickDay, doneDay: ritual.doneDay, doneSteps: ritual.doneSteps },
       prayerSettings: { notificationsEnabled: prayerSettings.notificationsEnabled, reminderMinutesBefore: prayerSettings.reminderMinutesBefore, notificationPrayers: prayerSettings.notificationPrayers },
     });

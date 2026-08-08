@@ -14,7 +14,7 @@ test('buildUserDataExport exports personal progress without bundled Quran text',
       readingGoal: 5,
     },
     journal: { entries: [{ id: '1', text: 'Notum', createdAt: '2026-08-08T06:00:00.000Z' }] },
-    dhikr: { day: '2026-08-08', count: 12 },
+    dhikr: { day: '2026-08-08', count: 12, history: { '2026-08-08': 12 } },
     ritual: { count: 1, bestCount: 3, lastTickDay: '2026-08-08', doneDay: '2026-08-08', doneSteps: ['quran'] },
     prayerSettings: { notificationsEnabled: true, reminderMinutesBefore: 10, notificationPrayers: ['fajr'] },
   }, new Date('2026-08-08T10:00:00.000Z'));
@@ -23,6 +23,7 @@ test('buildUserDataExport exports personal progress without bundled Quran text',
   assert.equal(result.version, 1);
   assert.equal(result.exportedAt, '2026-08-08T10:00:00.000Z');
   assert.deepEqual(result.quranProgress.bookmarks, ['2:255']);
+  assert.deepEqual(result.dhikr.history, { '2026-08-08': 12 });
   assert.equal('quranText' in result, false);
   assert.equal(JSON.stringify(result).includes('arabicText'), false);
 });
