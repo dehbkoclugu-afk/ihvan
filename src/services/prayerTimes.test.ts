@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { compassTurn, nextPrayer, prayerDay, prayerNotificationPlan } from './prayerTimes.ts';
+import { compassTurn, formatPrayerCountdown, nextPrayer, prayerDay, prayerNotificationPlan } from './prayerTimes.ts';
 
 const ISTANBUL = { latitude: 41.0082, longitude: 28.9784 };
 
@@ -26,6 +26,13 @@ test('rolls next prayer to tomorrow fajr after isha', () => {
 test('turns qibla bearing relative to the live device heading', () => {
   assert.equal(compassTurn(150, 120), 30);
   assert.equal(compassTurn(10, 350), 20);
+});
+
+test('formats a compact countdown to the next prayer', () => {
+  const now = new Date(2026, 7, 7, 12, 0, 0);
+  assert.equal(formatPrayerCountdown(new Date(2026, 7, 7, 12, 45, 0), now), '45 dk');
+  assert.equal(formatPrayerCountdown(new Date(2026, 7, 7, 13, 5, 0), now), '1 sa 5 dk');
+  assert.equal(formatPrayerCountdown(now, now), 'şimdi');
 });
 
 test('plans only the five prayer notifications and stays below iOS pending limits', () => {

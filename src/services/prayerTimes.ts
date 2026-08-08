@@ -71,6 +71,15 @@ export function formatPrayerTime(date: Date, timeZone = Intl.DateTimeFormat().re
   }).format(date);
 }
 
+export function formatPrayerCountdown(target: Date, now = new Date()): string {
+  const remainingMinutes = Math.max(0, Math.ceil((target.getTime() - now.getTime()) / 60_000));
+  if (!remainingMinutes) return 'şimdi';
+  const hours = Math.floor(remainingMinutes / 60);
+  const minutes = remainingMinutes % 60;
+  if (!hours) return `${minutes} dk`;
+  return minutes ? `${hours} sa ${minutes} dk` : `${hours} sa`;
+}
+
 export function compassTurn(qibla: number, heading: number): number {
   return ((qibla - heading) % 360 + 360) % 360;
 }
