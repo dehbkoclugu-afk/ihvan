@@ -3,6 +3,26 @@ import { dayKey } from './dates.ts';
 export type QuranReadingDays = Record<string, string[]>;
 export type QuranReadingGoal = 5 | 10 | 20;
 
+export function mergeQuranReadAyahs(readAyahs: readonly string[] | undefined, readingDays: QuranReadingDays, ayahKey?: string): string[] {
+  const keys = new Set(readAyahs ?? []);
+  for (const dailyKeys of Object.values(readingDays)) {
+    for (const key of dailyKeys) keys.add(key);
+  }
+  if (ayahKey) keys.add(ayahKey);
+  return [...keys];
+}
+
+export function quranReadingCoverage(readAyahs: readonly string[] | undefined, readingDays: QuranReadingDays, totalAyahs = 6236): { read: number; total: number; percent: number } {
+  const read = mergeQuranReadAyahs(readAyahs, readingDays).length;
+  const total = Math.max(0, totalAyahs);
+  const boundedRead = Math.min(read, total);
+  return {
+    read: boundedRead,
+    total,
+    percent: total ? Math.round((boundedRead / total) * 1000) / 10 : 0,
+  };
+}
+
 export function recentQuranDayKeys(days: number, now = new Date()): string[] {
   return Array.from({ length: Math.max(0, days) }, (_, index) => {
     const date = new Date(now);

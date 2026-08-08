@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { recordAyahRead as recordReadingDay, type QuranReadingDays, type QuranReadingGoal } from '@/lib/quranHabit';
+import { mergeQuranReadAyahs, recordAyahRead as recordReadingDay, type QuranReadingDays, type QuranReadingGoal } from '@/lib/quranHabit';
 
 export interface QuranPosition {
   surah: number;
@@ -13,6 +13,7 @@ interface QuranProgressState {
   lastRead: QuranPosition | null;
   bookmarks: string[];
   readingDays: QuranReadingDays;
+  readAyahs: string[];
   readingGoal: QuranReadingGoal;
   setLastRead: (surah: number, ayah: number) => void;
   recordAyahRead: (surah: number, ayah: number, date?: Date) => void;
@@ -29,15 +30,24 @@ export const useQuranProgressStore = create<QuranProgressState>()(
       lastRead: null,
       bookmarks: [],
       readingDays: {},
+      readAyahs: [],
       readingGoal: 5,
       setLastRead: (surah, ayah) => set({ lastRead: { surah, ayah, updatedAt: new Date().toISOString() } }),
-      recordAyahRead: (surah, ayah, date = new Date()) => set((state) => ({
-        readingDays: recordReadingDay(state.readingDays, keyFor(surah, ayah), date),
-      })),
-      markAyahRead: (surah, ayah, date = new Date()) => set((state) => ({
-        lastRead: { surah, ayah, updatedAt: date.toISOString() },
-        readingDays: recordReadingDay(state.readingDays, keyFor(surah, ayah), date),
-      })),
+      recordAyahRead: (surah, ayah, date = new Date()) => set((state) => {
+        const key = keyFor(surah, ayah);
+        return {
+          readingDays: recordReadingDay(state.readingDays, key, date),
+          readAyahs: mergeQuranReadAyahs(state.readAyahs, state.readingDays, key),
+        };
+      }),
+      markAyahRead: (surah, ayah, date = new Date()) => set((state) => {
+        const key = keyFor(surah, ayah);
+        return {
+          lastRead: { surah, ayah, updatedAt: date.toISOString() },
+          readingDays: recordReadingDay(state.readingDays, key, date),
+          readAyahs: mergeQuranReadAyahs(state.readAyahs, state.readingDays, key),
+        };
+      }),
       setReadingGoal: (readingGoal) => set({ readingGoal }),
       toggleBookmark: (surah, ayah) => set((state) => {
         const key = keyFor(surah, ayah);

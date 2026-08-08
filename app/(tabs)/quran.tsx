@@ -6,7 +6,7 @@ import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { QURAN_JUZS, QURAN_SURAHS, getAyah, mushafPositionPercent } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
-import { quranGoalPercent, quranReadCount, quranReadingStreak, type QuranReadingGoal } from '@/lib/quranHabit';
+import { quranGoalPercent, quranReadCount, quranReadingCoverage, quranReadingStreak, type QuranReadingGoal } from '@/lib/quranHabit';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
@@ -19,10 +19,11 @@ export default function Quran() {
   const t = useTheme();
   const [query, setQuery] = useState('');
   const [browseMode, setBrowseMode] = useState<'surahs' | 'juzs'>('surahs');
-  const { lastRead, bookmarks, readingDays, readingGoal, setReadingGoal } = useQuranProgressStore();
+  const { lastRead, bookmarks, readingDays, readAyahs, readingGoal, setReadingGoal } = useQuranProgressStore();
   const readToday = quranReadCount(readingDays);
   const goalPercent = quranGoalPercent(readToday, readingGoal);
   const readingStreak = quranReadingStreak(readingDays);
+  const coverage = quranReadingCoverage(readAyahs, readingDays);
   const verseMatch = query.trim().match(/^(\d{1,3})\s*:\s*(\d{1,3})$/);
   const directAyah = verseMatch ? getAyah(Number(verseMatch[1]), Number(verseMatch[2])) : undefined;
   const bookmarkAyahs = useMemo(() => bookmarks.slice(0, 5).map((key) => {
@@ -52,6 +53,7 @@ export default function Quran() {
       <View style={{ flexDirection: 'row', alignItems: 'center' }}><View style={{ flex: 1 }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold }}>Bugünkü okuma hedefi</Text><Text style={{ color: t.gold, fontFamily: fonts.sansBold, marginTop: 2 }}>{readToday}/{readingGoal} ayet</Text></View><Pressable accessibilityRole="button" onPress={() => router.push('/quran-history')} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingLeft: spacing.md }}><Text style={{ color: t.gold, fontFamily: fonts.sansSemiBold, fontSize: 11 }}>Geçmiş</Text><Ionicons name="chevron-forward" size={14} color={t.gold} /></Pressable></View>
       <View style={{ height: 5, borderRadius: 3, backgroundColor: t.surfaceAlt, marginTop: spacing.md }}><View style={{ width: `${goalPercent}%`, height: 5, borderRadius: 3, backgroundColor: t.gold }} /></View>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm }}><Ionicons name="flame-outline" size={14} color={t.gold} /><Text style={{ color: t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10, marginLeft: 4 }}>{readingStreak.current} günlük Kur’an serisi</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 10, marginLeft: 'auto' }}>90 günde en iyi {readingStreak.best}</Text></View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.xs }}><Ionicons name="book-outline" size={14} color={t.gold} /><Text style={{ color: t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10, marginLeft: 4 }}>{coverage.read.toLocaleString('tr-TR')} / {coverage.total.toLocaleString('tr-TR')} tekil ayet</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 10, marginLeft: 'auto' }}>%{coverage.percent} kapsam</Text></View>
       <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>{([5, 10, 20] as QuranReadingGoal[]).map((goal) => <Pressable key={goal} accessibilityRole="radio" accessibilityState={{ selected: readingGoal === goal }} onPress={() => setReadingGoal(goal)} style={{ flex: 1, borderRadius: radius.pill, paddingVertical: 7, alignItems: 'center', backgroundColor: readingGoal === goal ? t.gold : t.surfaceAlt }}><Text style={{ color: readingGoal === goal ? t.onGold : t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 11 }}>{goal} ayet</Text></Pressable>)}</View>
     </View>
 
