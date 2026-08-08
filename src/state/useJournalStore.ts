@@ -10,6 +10,7 @@ interface JournalState {
   add: (text: string) => void;
   update: (id: string, text: string) => void;
   remove: (id: string) => void;
+  clearEntries: () => void;
 }
 
 export const useJournalStore = create<JournalState>()(
@@ -23,6 +24,7 @@ export const useJournalStore = create<JournalState>()(
       }),
       update: (id, text) => set((state) => ({ entries: updateReflectionEntries(state.entries, id, text) })),
       remove: (id) => set((s) => ({ entries: s.entries.filter((entry) => entry.id !== id) })),
+      clearEntries: () => set({ entries: [] }),
     }),
     { name: 'ihvan-journal', storage: createJSONStorage(() => AsyncStorage) },
   ),

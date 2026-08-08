@@ -15,6 +15,7 @@ interface StreakState {
   tickToday: () => void;
   toggleStep: (step: RitualStep) => void;
   completeStep: (step: RitualStep) => void;
+  clearProgress: () => void;
 }
 
 export const useStreakStore = create<StreakState>()(
@@ -49,6 +50,7 @@ export const useStreakStore = create<StreakState>()(
         set({ doneDay: today, doneSteps });
         if (isRitualComplete(doneSteps)) get().tickToday();
       },
+      clearProgress: () => set({ count: 0, bestCount: 0, lastTickDay: null, doneDay: null, doneSteps: [] }),
     }),
     { name: 'ihvan-streak', storage: createJSONStorage(() => AsyncStorage) },
   ),

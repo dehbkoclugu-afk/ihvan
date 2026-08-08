@@ -9,6 +9,7 @@ interface DhikrState {
   count: number;
   increment: () => void;
   reset: () => void;
+  clearHistory: () => void;
 }
 
 export const useDhikrStore = create<DhikrState>()(
@@ -18,6 +19,7 @@ export const useDhikrStore = create<DhikrState>()(
       count: 0,
       increment: () => set((state) => incrementDailyDhikr(state.day, state.count)),
       reset: () => set({ day: dayKey(), count: 0 }),
+      clearHistory: () => set({ day: null, count: 0 }),
     }),
     { name: 'ihvan-dhikr', storage: createJSONStorage(() => AsyncStorage) },
   ),
