@@ -35,3 +35,18 @@ export function quranReadingSummary(readingDays: QuranReadingDays, days: number,
     activeDays: counts.filter((count) => count > 0).length,
   };
 }
+
+export function quranReadingStreak(readingDays: QuranReadingDays, days = 90, now = new Date()): { current: number; best: number } {
+  const active = recentQuranDayKeys(days, now).map((key) => (readingDays[key]?.length ?? 0) > 0);
+  const currentStart = active[0] ? 0 : 1;
+  let current = 0;
+  for (let index = currentStart; index < active.length && active[index]; index += 1) current += 1;
+
+  let best = 0;
+  let run = 0;
+  for (const isActive of active) {
+    run = isActive ? run + 1 : 0;
+    best = Math.max(best, run);
+  }
+  return { current, best };
+}

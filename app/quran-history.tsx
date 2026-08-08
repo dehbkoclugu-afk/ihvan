@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { useTheme } from '@/hooks/useTheme';
-import { quranReadingSummary, recentQuranDayKeys } from '@/lib/quranHabit';
+import { quranReadingStreak, quranReadingSummary, recentQuranDayKeys } from '@/lib/quranHabit';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
@@ -19,6 +19,7 @@ export default function QuranHistory() {
   const days = recentQuranDayKeys(30);
   const counts = days.map((key) => readingDays[key]?.length ?? 0);
   const maxCount = Math.max(1, ...counts);
+  const streak = quranReadingStreak(readingDays);
   const formatDay = new Intl.DateTimeFormat('tr-TR', { weekday: 'short', day: 'numeric', month: 'short' });
 
   return <Screen>
@@ -30,6 +31,8 @@ export default function QuranHistory() {
       const summary = quranReadingSummary(readingDays, period);
       return <View key={period} style={{ flex: 1, backgroundColor: t.surface, borderRadius: radius.inner, paddingVertical: spacing.lg, alignItems: 'center' }}><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 24 }}>{summary.ayahs}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10 }}>AYET · {period} GÜN</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 9, marginTop: 3 }}>{summary.activeDays} aktif gün</Text></View>;
     })}</View>
+
+    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: t.goldSoft, borderRadius: radius.inner, padding: spacing.lg, marginTop: spacing.md }}><Ionicons name="flame" size={22} color={t.gold} /><View style={{ marginLeft: spacing.sm, flex: 1 }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold }}>Kur’an okuma serisi</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 11, marginTop: 2 }}>Bugün veya dünden devam eden seri</Text></View><View style={{ alignItems: 'flex-end' }}><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 24 }}>{streak.current} gün</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 9 }}>90 günde en iyi {streak.best}</Text></View></View>
 
     <Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 17, marginTop: spacing.xxl }}>Son 30 gün</Text>
     <View style={{ gap: spacing.xs, marginTop: spacing.md }}>{days.map((key, index) => {
