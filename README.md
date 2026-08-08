@@ -9,7 +9,7 @@
 - Dua and dhikr practice
 - Foreground-location prayer times with the Adhan Turkey calculation method
 - Qibla bearing and optional live device compass
-- Opt-in local prayer-time notifications (10-day rolling schedule)
+- Opt-in local prayer-time notifications with per-prayer selection (10-day rolling schedule)
 - Private five-prayer daily completion tracking with editable history and 7/30/90-day progress views
 - Private reflection journal
 - Vigil/Dawn themes

@@ -1,6 +1,9 @@
 import { CalculationMethod, Coordinates, PrayerTimes, Qibla } from 'adhan';
 
 export type PrayerKey = 'fajr' | 'sunrise' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
+export type PrayerNotificationKey = Exclude<PrayerKey, 'sunrise'>;
+
+export const DEFAULT_PRAYER_NOTIFICATION_KEYS: PrayerNotificationKey[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
 export interface PrayerMoment {
   key: PrayerKey;
@@ -84,15 +87,23 @@ export function compassTurn(qibla: number, heading: number): number {
   return ((qibla - heading) % 360 + 360) % 360;
 }
 
-export function prayerNotificationPlan(latitude: number, longitude: number, from = new Date(), days = 10, minutesBefore: PrayerReminderOffset = 0): PrayerNotificationPlanItem[] {
+export function prayerNotificationPlan(
+  latitude: number,
+  longitude: number,
+  from = new Date(),
+  days = 10,
+  minutesBefore: PrayerReminderOffset = 0,
+  includedPrayers: readonly PrayerNotificationKey[] = DEFAULT_PRAYER_NOTIFICATION_KEYS,
+): PrayerNotificationPlanItem[] {
   const plan: PrayerNotificationPlanItem[] = [];
+  const included = new Set<PrayerKey>(includedPrayers);
   for (let offset = 0; offset < days; offset += 1) {
     const date = new Date(from);
     date.setDate(date.getDate() + offset);
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     for (const moment of prayerDay(latitude, longitude, date).moments) {
       const notificationTime = new Date(moment.time.getTime() - minutesBefore * 60_000);
-      if (!moment.isPrayer || notificationTime.getTime() <= from.getTime()) continue;
+      if (!moment.isPrayer || !included.has(moment.key) || notificationTime.getTime() <= from.getTime()) continue;
       plan.push({ identifier: `ihvan-prayer-${dateKey}-${moment.key}`, label: moment.label, time: notificationTime });
     }
   }
