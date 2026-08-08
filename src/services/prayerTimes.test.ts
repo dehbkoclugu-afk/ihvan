@@ -44,6 +44,14 @@ test('plans only the five prayer notifications and stays below iOS pending limit
   assert.ok(plan.every((item) => item.time > from));
 });
 
+test('filters notification plan to selected prayers', () => {
+  const from = new Date(2026, 7, 8, 0, 0);
+  const plan = prayerNotificationPlan(41.0082, 28.9784, from, 2, 0, ['fajr', 'isha']);
+  assert.ok(plan.length >= 3 && plan.length <= 4);
+  assert.ok(plan.every((item) => item.identifier.endsWith('-fajr') || item.identifier.endsWith('-isha')));
+  assert.deepEqual(prayerNotificationPlan(41.0082, 28.9784, from, 2, 0, []), []);
+});
+
 test('moves prayer reminders earlier by the selected offset', () => {
   const from = new Date(2026, 7, 7, 0, 1);
   const exact = prayerNotificationPlan(ISTANBUL.latitude, ISTANBUL.longitude, from, 1, 0);

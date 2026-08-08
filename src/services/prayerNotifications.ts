@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import { prayerNotificationPlan, type PrayerReminderOffset } from './prayerTimes';
+import { DEFAULT_PRAYER_NOTIFICATION_KEYS, prayerNotificationPlan, type PrayerNotificationKey, type PrayerReminderOffset } from './prayerTimes';
 
 const CHANNEL_ID = 'prayer-times';
 const IDENTIFIER_PREFIX = 'ihvan-prayer-';
@@ -25,9 +25,9 @@ export async function cancelPrayerNotifications() {
   await Promise.all(scheduled.filter((item) => item.identifier.startsWith(IDENTIFIER_PREFIX)).map((item) => Notifications.cancelScheduledNotificationAsync(item.identifier)));
 }
 
-async function schedule(latitude: number, longitude: number, locationLabel: string, minutesBefore: PrayerReminderOffset) {
+async function schedule(latitude: number, longitude: number, locationLabel: string, minutesBefore: PrayerReminderOffset, includedPrayers: readonly PrayerNotificationKey[]) {
   await cancelPrayerNotifications();
-  const plan = prayerNotificationPlan(latitude, longitude, new Date(), 10, minutesBefore);
+  const plan = prayerNotificationPlan(latitude, longitude, new Date(), 10, minutesBefore, includedPrayers);
   for (const item of plan) {
     await Notifications.scheduleNotificationAsync({
       identifier: item.identifier,
@@ -47,7 +47,7 @@ async function schedule(latitude: number, longitude: number, locationLabel: stri
   return plan.length;
 }
 
-export async function enablePrayerNotifications(latitude: number, longitude: number, locationLabel: string, minutesBefore: PrayerReminderOffset = 0) {
+export async function enablePrayerNotifications(latitude: number, longitude: number, locationLabel: string, minutesBefore: PrayerReminderOffset = 0, includedPrayers: readonly PrayerNotificationKey[] = DEFAULT_PRAYER_NOTIFICATION_KEYS) {
   if (Platform.OS === 'web') throw new Error('Vakit bildirimleri mobil uygulamada kullanılabilir.');
   await ensureChannel();
   let granted = await hasPermission();
@@ -56,14 +56,14 @@ export async function enablePrayerNotifications(latitude: number, longitude: num
     granted = result.status === 'granted';
   }
   if (!granted) throw new Error('Bildirim izni verilmedi.');
-  return schedule(latitude, longitude, locationLabel, minutesBefore);
+  return schedule(latitude, longitude, locationLabel, minutesBefore, includedPrayers);
 }
 
-export async function refreshPrayerNotifications(latitude: number, longitude: number, locationLabel: string, minutesBefore: PrayerReminderOffset = 0) {
+export async function refreshPrayerNotifications(latitude: number, longitude: number, locationLabel: string, minutesBefore: PrayerReminderOffset = 0, includedPrayers: readonly PrayerNotificationKey[] = DEFAULT_PRAYER_NOTIFICATION_KEYS) {
   if (Platform.OS === 'web') return false;
   await ensureChannel();
   if (!(await hasPermission())) return false;
-  await schedule(latitude, longitude, locationLabel, minutesBefore);
+  await schedule(latitude, longitude, locationLabel, minutesBefore, includedPrayers);
   return true;
 }
 
