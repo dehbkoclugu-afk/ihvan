@@ -10,6 +10,7 @@ export const TRACKED_PRAYERS = [
 
 export type TrackedPrayerKey = (typeof TRACKED_PRAYERS)[number]['key'];
 export type PrayerCompletions = Record<string, TrackedPrayerKey[]>;
+export type PrayerDayFilter = 'all' | 'incomplete' | 'complete';
 
 export function recentDayKeys(days: number, now = new Date()): string[] {
   if (days <= 0) return [];
@@ -36,6 +37,12 @@ export function prayerPercentFor(completions: PrayerCompletions, prayer: Tracked
 
 export function isPrayerDayComplete(completed: readonly TrackedPrayerKey[] = []): boolean {
   return TRACKED_PRAYERS.every((prayer) => completed.includes(prayer.key));
+}
+
+export function prayerDayFilterMatches(completed: readonly TrackedPrayerKey[] = [], filter: PrayerDayFilter): boolean {
+  if (filter === 'all') return true;
+  const complete = isPrayerDayComplete(completed);
+  return filter === 'complete' ? complete : !complete;
 }
 
 export function prayerCompletionStreak(completions: PrayerCompletions, days = 90, now = new Date()): { current: number; best: number } {
