@@ -11,6 +11,7 @@ import { usePrayerLocation } from '@/hooks/usePrayerLocation';
 import { useDhikrStore } from '@/state/useDhikrStore';
 import { usePrayerSettingsStore } from '@/state/usePrayerSettingsStore';
 import { cancelPrayerNotifications, enablePrayerNotifications, refreshPrayerNotifications } from '@/services/prayerNotifications';
+import { selectionFeedback, successFeedback } from '@/services/haptics';
 import { dayKey } from '@/lib/dates';
 import { DAILY_DHIKR_TARGET, dhikrCountForDay, isDailyDhikrTargetReached } from '@/lib/dhikr';
 import { prayerCompletionStreak, TRACKED_PRAYERS } from '@/lib/prayerTracking';
@@ -37,6 +38,8 @@ export default function Worship() {
 
   function incrementDhikr() {
     const nextCount = todayDhikrCount + 1;
+    if (nextCount === DAILY_DHIKR_TARGET) successFeedback();
+    else selectionFeedback();
     increment();
     if (isDailyDhikrTargetReached(nextCount)) completeRitualStep('dhikr');
   }
@@ -89,7 +92,7 @@ export default function Worship() {
     <SectionHeader title="Bugünkü namazlar" right={<Text style={{ color: t.inkSoft, fontFamily: fonts.sansMedium }}>{completedPrayers.length}/5</Text>} />
     <View style={{ flexDirection: 'row', gap: spacing.sm }}>{TRACKED_PRAYERS.map((prayer) => {
       const done = completedPrayers.includes(prayer.key);
-      return <Pressable key={prayer.key} accessibilityRole="checkbox" accessibilityState={{ checked: done }} accessibilityLabel={`${prayer.label} namazını kıldım`} onPress={() => togglePrayer(prayer.key)} style={({ pressed }) => ({ flex: 1, minWidth: 0, paddingVertical: spacing.md, borderRadius: radius.inner, borderWidth: 1, borderColor: done ? t.gold : t.border, backgroundColor: done ? t.goldSoft : t.surface, alignItems: 'center', opacity: pressed ? 0.75 : 1 })}><Ionicons name={done ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={done ? t.gold : t.inkFaint} /><Text numberOfLines={1} adjustsFontSizeToFit style={{ color: done ? t.gold : t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10, marginTop: 5 }}>{prayer.label}</Text></Pressable>;
+      return <Pressable key={prayer.key} accessibilityRole="checkbox" accessibilityState={{ checked: done }} accessibilityLabel={`${prayer.label} namazını kıldım`} onPress={() => { selectionFeedback(); togglePrayer(prayer.key); }} style={({ pressed }) => ({ flex: 1, minWidth: 0, paddingVertical: spacing.md, borderRadius: radius.inner, borderWidth: 1, borderColor: done ? t.gold : t.border, backgroundColor: done ? t.goldSoft : t.surface, alignItems: 'center', opacity: pressed ? 0.75 : 1 })}><Ionicons name={done ? 'checkmark-circle' : 'ellipse-outline'} size={20} color={done ? t.gold : t.inkFaint} /><Text numberOfLines={1} adjustsFontSizeToFit style={{ color: done ? t.gold : t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10, marginTop: 5 }}>{prayer.label}</Text></Pressable>;
     })}</View>
     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.sm }}><Ionicons name="flame-outline" size={14} color={t.gold} /><Text style={{ color: t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10, marginLeft: 4 }}>{prayerStreak.current} günlük 5/5 seri</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 10, marginLeft: 'auto' }}>90 günde en iyi {prayerStreak.best}</Text></View>
     <SectionHeader title="Namaz vakitleri" right={location ? <Pressable accessibilityRole="button" accessibilityLabel="Namaz vakitlerini yenile" hitSlop={8} onPress={() => void refresh()}><Ionicons name="refresh" size={17} color={t.gold} /></Pressable> : undefined} />
