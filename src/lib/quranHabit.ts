@@ -30,6 +30,13 @@ export function quranProgressFilterMatches(readCount: number, totalCount: number
   return filter === 'complete' ? complete : !complete;
 }
 
+export function quranCompletedSectionCount(
+  readCounts: Readonly<Record<number, number>>,
+  sections: readonly { id: number; ayahCount: number }[],
+): number {
+  return sections.filter((section) => section.ayahCount > 0 && (readCounts[section.id] ?? 0) >= section.ayahCount).length;
+}
+
 export function quranSurahReadCounts(
   readAyahs: readonly string[] | undefined,
   readingDays: QuranReadingDays,
