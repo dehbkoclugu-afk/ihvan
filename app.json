@@ -5,6 +5,7 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "ihvan",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
     "ios": {
@@ -13,11 +14,16 @@
     },
     "android": {
       "package": "com.ihvan.quran",
-      "permissions": ["SCHEDULE_EXACT_ALARM"]
+      "permissions": ["SCHEDULE_EXACT_ALARM"],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand-mark.png",
+        "backgroundColor": "#164B42"
+      }
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "static",
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",
@@ -25,7 +31,8 @@
       "expo-asset",
       "expo-localization",
       ["expo-location", { "locationWhenInUsePermission": "İhvan, bulunduğun yere göre namaz vakitlerini ve kıble yönünü hesaplamak için konumunu kullanır." }],
-      ["expo-notifications", { "color": "#2D8C72" }]
+      ["expo-notifications", { "color": "#2D8C72", "icon": "./assets/notification-icon.png" }],
+      ["expo-splash-screen", { "backgroundColor": "#164B42", "image": "./assets/brand-mark.png", "imageWidth": 180 }]
     ],
     "experiments": { "typedRoutes": true }
   }
