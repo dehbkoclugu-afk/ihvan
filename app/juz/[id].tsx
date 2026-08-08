@@ -4,7 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { QURAN_JUZS, QURAN_SURAHS, getJuzAyahs } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
-import { dayKey } from '@/lib/dates';
+import { mergeQuranReadAyahs } from '@/lib/quranHabit';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
@@ -17,15 +17,18 @@ export default function JuzDetail() {
   const juzId = Number(id);
   const juz = QURAN_JUZS.find((item) => item.id === juzId);
   const metrics = QURAN_TEXT_METRICS[useUserStore((state) => state.quranTextSize)];
-  const { lastRead, bookmarks, readingDays, markAyahRead, toggleBookmark } = useQuranProgressStore();
-  const readToday = readingDays[dayKey()] ?? [];
+  const { lastRead, bookmarks, readingDays, readAyahs, markAyahRead, toggleBookmark } = useQuranProgressStore();
 
   if (!juz) return <Screen><Text style={{ color: t.ink }}>Cüz bulunamadı.</Text></Screen>;
   const ayahs = getJuzAyahs(juzId);
+  const readKeys = new Set(mergeQuranReadAyahs(readAyahs, readingDays));
+  const readCount = ayahs.reduce((count, ayah) => count + Number(readKeys.has(`${ayah.surah}:${ayah.ayah}`)), 0);
+  const progress = juz.ayahCount ? Math.round((readCount / juz.ayahCount) * 100) : 0;
 
   return <Screen>
     <Pressable onPress={() => router.back()} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="arrow-back" size={20} color={t.ink} /></Pressable>
     <View style={{ alignItems: 'center', marginTop: spacing.xl }}><Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 30 }}>{juz.id}. Cüz</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, marginTop: 5 }}>{juz.ayahCount} ayet · başlangıç {juz.startSurah}:{juz.startAyah}</Text></View>
+    <View style={{ backgroundColor: t.surface, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.lg }}><View style={{ flexDirection: 'row', alignItems: 'center' }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>Cüz ilerlemesi</Text><Text style={{ color: t.gold, fontFamily: fonts.sansBold, fontSize: 12, marginLeft: 'auto' }}>{readCount}/{juz.ayahCount} · %{progress}</Text></View><View style={{ height: 5, borderRadius: 3, backgroundColor: t.surfaceAlt, marginTop: spacing.sm }}><View style={{ width: `${progress}%`, height: 5, borderRadius: 3, backgroundColor: t.gold }} /></View></View>
     <View style={{ backgroundColor: t.goldSoft, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.xl }}><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18 }}>Cüz sınırları Tanzil metadata’sından alınır. Kur’an metni değiştirilmeden gösterilir; makine/AI çevirisi kullanılmaz.</Text></View>
     {ayahs.map((ayah, index) => {
       const key = `${ayah.surah}:${ayah.ayah}`;
@@ -33,7 +36,7 @@ export default function JuzDetail() {
       const previous = ayahs[index - 1];
       const startsSurah = !previous || previous.surah !== ayah.surah;
       const bookmarked = bookmarks.includes(key);
-      const read = readToday.includes(key);
+      const read = readKeys.has(key);
       const isLastRead = lastRead?.surah === ayah.surah && lastRead.ayah === ayah.ayah;
       return <View key={key}>
         {startsSurah ? <View style={{ alignItems: 'center', paddingTop: spacing.xl, paddingBottom: spacing.sm }}><Text style={{ color: t.ink, fontSize: 28, writingDirection: 'rtl' }}>{surah.arabicName}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sansSemiBold, marginTop: 4 }}>{surah.transliteration} · {surah.id}</Text></View> : null}
