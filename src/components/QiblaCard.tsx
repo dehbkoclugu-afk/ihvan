@@ -37,7 +37,7 @@ export function QiblaCard({ location }: { location: PrayerLocation }) {
     </View>
     <Text style={{ color: '#F6F2E9', fontFamily: fonts.serif, fontSize: 26, marginTop: spacing.md }}>{Math.round(qibla)}°</Text>
     <Text style={{ color: 'rgba(246,242,233,0.65)', fontFamily: fonts.sans, fontSize: 11, textAlign: 'center', lineHeight: 17, marginTop: 3 }}>{heading === null ? 'Kuzeye göre kıble açısı' : 'Canlı pusula · telefonu düz tut'}</Text>
-    <Pressable onPress={() => { setError(false); setLive((value) => !value); }} style={{ marginTop: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: 9, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.10)' }}><Text style={{ color: '#F6F2E9', fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{live ? 'Pusulayı durdur' : 'Canlı pusulayı aç'}</Text></Pressable>
-    {error ? <Text style={{ color: '#F1B6A8', fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.sm }}>Pusula sensörü okunamadı.</Text> : null}
+    <Pressable accessibilityRole="switch" accessibilityState={{ checked: live }} accessibilityLabel="Canlı kıble pusulası" onPress={() => { setError(false); setLive((value) => !value); }} style={{ marginTop: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: 9, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.10)' }}><Text style={{ color: '#F6F2E9', fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{live ? 'Pusulayı durdur' : 'Canlı pusulayı aç'}</Text></Pressable>
+    {error ? <Text accessibilityRole="alert" style={{ color: '#F1B6A8', fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.sm }}>Pusula sensörü okunamadı.</Text> : null}
   </View>;
 }
