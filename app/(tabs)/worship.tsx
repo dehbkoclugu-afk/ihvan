@@ -12,6 +12,7 @@ import { useDhikrStore } from '@/state/useDhikrStore';
 import { usePrayerSettingsStore } from '@/state/usePrayerSettingsStore';
 import { cancelPrayerNotifications, enablePrayerNotifications, refreshPrayerNotifications } from '@/services/prayerNotifications';
 import { dayKey } from '@/lib/dates';
+import { dhikrCountForDay } from '@/lib/dhikr';
 import { TRACKED_PRAYERS } from '@/lib/prayerTracking';
 import { usePrayerTrackingStore } from '@/state/usePrayerTrackingStore';
 import type { PrayerReminderOffset } from '@/services/prayerTimes';
@@ -20,7 +21,7 @@ import { radius, spacing } from '@/theme/tokens';
 
 export default function Worship() {
   const t = useTheme();
-  const { count, increment, reset } = useDhikrStore();
+  const { day: dhikrDay, count, increment, reset } = useDhikrStore();
   const { location, loading, error, requestLocation, refresh } = usePrayerLocation();
   const { notificationsEnabled, reminderMinutesBefore, notificationPrayers, setNotificationsEnabled, setReminderMinutesBefore, toggleNotificationPrayer } = usePrayerSettingsStore();
   const { completions, togglePrayer } = usePrayerTrackingStore();
@@ -28,6 +29,7 @@ export default function Worship() {
   const [notificationError, setNotificationError] = useState<string | null>(null);
   const dua = dailyDua();
   const completedPrayers = completions[dayKey()] ?? [];
+  const todayDhikrCount = dhikrCountForDay(dhikrDay, count);
 
   useEffect(() => {
     if (!location || !notificationsEnabled) return;
@@ -75,7 +77,7 @@ export default function Worship() {
     <SectionHeader title={dua.title} />
     <View style={{ backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.card, padding: spacing.xl }}><Text style={{ color: t.ink, fontSize: 30, lineHeight: 48, textAlign: 'right', writingDirection: 'rtl' }}>{dua.arabic}</Text><Text style={{ color: t.gold, fontFamily: fonts.sansSemiBold, marginTop: spacing.md }}>{dua.reference}</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.sm }}>Arapça metin: Tanzil Uthmani · Türkçe çeviri eklenmedi.</Text></View>
     <SectionHeader title="Zikir sayacı" right={<Pressable onPress={reset}><Text style={{ color: t.gold, fontFamily: fonts.sansSemiBold }}>Sıfırla</Text></Pressable>} />
-    <Pressable onPress={increment} style={({ pressed }) => ({ height: 190, backgroundColor: t.goldSoft, borderRadius: radius.hero, borderWidth: 1, borderColor: t.gold, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 58 }}>{count}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sansMedium, marginTop: 6 }}>dokun ve say</Text></Pressable>
+    <Pressable onPress={increment} style={({ pressed }) => ({ height: 190, backgroundColor: t.goldSoft, borderRadius: radius.hero, borderWidth: 1, borderColor: t.gold, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 58 }}>{todayDhikrCount}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sansMedium, marginTop: 6 }}>bugün · dokun ve say</Text></Pressable>
     <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>{DHIKR.map((item) => <View key={item.title} style={{ flex: 1, paddingVertical: spacing.md, backgroundColor: t.surface, borderRadius: radius.inner, alignItems: 'center' }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{item.title}</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: 2 }}>{item.target}</Text></View>)}</View>
     <SectionHeader title="Sıradaki" />
     <Text style={{ color: t.inkSoft, fontFamily: fonts.sans, lineHeight: 22 }}>Doğrulanmış kıraat kaynağı ve kullanım hakları netleşince sesli sûre deneyimi bağlanacak.</Text>
