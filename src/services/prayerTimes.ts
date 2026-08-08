@@ -21,6 +21,8 @@ export interface PrayerNotificationPlanItem {
   time: Date;
 }
 
+export type PrayerReminderOffset = 0 | 5 | 10 | 15 | 30;
+
 const labels: Record<PrayerKey, string> = {
   fajr: 'İmsak',
   sunrise: 'Güneş',
@@ -73,15 +75,16 @@ export function compassTurn(qibla: number, heading: number): number {
   return ((qibla - heading) % 360 + 360) % 360;
 }
 
-export function prayerNotificationPlan(latitude: number, longitude: number, from = new Date(), days = 10): PrayerNotificationPlanItem[] {
+export function prayerNotificationPlan(latitude: number, longitude: number, from = new Date(), days = 10, minutesBefore: PrayerReminderOffset = 0): PrayerNotificationPlanItem[] {
   const plan: PrayerNotificationPlanItem[] = [];
   for (let offset = 0; offset < days; offset += 1) {
     const date = new Date(from);
     date.setDate(date.getDate() + offset);
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     for (const moment of prayerDay(latitude, longitude, date).moments) {
-      if (!moment.isPrayer || moment.time.getTime() <= from.getTime()) continue;
-      plan.push({ identifier: `ihvan-prayer-${dateKey}-${moment.key}`, label: moment.label, time: moment.time });
+      const notificationTime = new Date(moment.time.getTime() - minutesBefore * 60_000);
+      if (!moment.isPrayer || notificationTime.getTime() <= from.getTime()) continue;
+      plan.push({ identifier: `ihvan-prayer-${dateKey}-${moment.key}`, label: moment.label, time: notificationTime });
     }
   }
   return plan;

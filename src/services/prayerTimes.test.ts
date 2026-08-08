@@ -36,3 +36,12 @@ test('plans only the five prayer notifications and stays below iOS pending limit
   assert.ok(plan.length < 64);
   assert.ok(plan.every((item) => item.time > from));
 });
+
+test('moves prayer reminders earlier by the selected offset', () => {
+  const from = new Date(2026, 7, 7, 0, 1);
+  const exact = prayerNotificationPlan(ISTANBUL.latitude, ISTANBUL.longitude, from, 1, 0);
+  const early = prayerNotificationPlan(ISTANBUL.latitude, ISTANBUL.longitude, from, 1, 15);
+  assert.equal(early.length, exact.length);
+  assert.deepEqual(early.map((item) => item.identifier), exact.map((item) => item.identifier));
+  assert.ok(early.every((item, index) => exact[index].time.getTime() - item.time.getTime() === 15 * 60_000));
+});
