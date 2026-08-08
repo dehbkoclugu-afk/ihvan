@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { quranGoalPercent, quranReadCount, recordAyahRead } from './quranHabit.ts';
+import { quranGoalPercent, quranReadCount, quranReadingSummary, recentQuranDayKeys, recordAyahRead } from './quranHabit.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -21,4 +21,10 @@ test('caps daily Quran goal progress at one hundred percent', () => {
   assert.equal(quranGoalPercent(3, 5), 60);
   assert.equal(quranGoalPercent(8, 5), 100);
   assert.equal(quranGoalPercent(3, 0), 0);
+});
+
+test('summarizes Quran reading over a bounded recent window', () => {
+  const readingDays = { '2026-08-08': ['2:1', '2:2'], '2026-08-07': [], '2026-08-06': ['1:1'], '2026-08-01': ['3:1'] };
+  assert.deepEqual(recentQuranDayKeys(3, now), ['2026-08-08', '2026-08-07', '2026-08-06']);
+  assert.deepEqual(quranReadingSummary(readingDays, 3, now), { ayahs: 3, activeDays: 2 });
 });
