@@ -13,7 +13,7 @@ export interface UserDataExportInput {
     readingGoal: number;
   };
   journal: { entries: { id: string; text: string; createdAt: string }[] };
-  dhikr: { day: string | null; count: number };
+  dhikr: { day: string | null; count: number; history: Record<string, number> };
   ritual: {
     count: number;
     bestCount: number;

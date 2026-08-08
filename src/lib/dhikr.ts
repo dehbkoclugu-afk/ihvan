@@ -7,6 +7,50 @@ export interface DailyDhikrCount {
   count: number;
 }
 
+export type DhikrHistory = Record<string, number>;
+
+export function recentDhikrDayKeys(days: number, now = new Date()): string[] {
+  if (days <= 0) return [];
+  return Array.from({ length: days }, (_, index) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() - index);
+    return dayKey(date);
+  });
+}
+
+export function dhikrHistoryWithLegacy(history: DhikrHistory = {}, storedDay: string | null, count: number): DhikrHistory {
+  if (!storedDay || count <= 0 || (history[storedDay] ?? 0) >= count) return history;
+  return { ...history, [storedDay]: Math.max(0, count) };
+}
+
+export function pruneDhikrHistory(history: DhikrHistory, keepDays = 90, now = new Date()): DhikrHistory {
+  const keep = new Set(recentDhikrDayKeys(keepDays, now));
+  return Object.fromEntries(Object.entries(history).filter(([key]) => keep.has(key)));
+}
+
+export function dhikrSummary(history: DhikrHistory, days: number, now = new Date()) {
+  const counts = recentDhikrDayKeys(days, now).map((key) => Math.max(0, history[key] ?? 0));
+  return {
+    total: counts.reduce((sum, value) => sum + value, 0),
+    activeDays: counts.filter((value) => value > 0).length,
+    targetDays: counts.filter((value) => isDailyDhikrTargetReached(value)).length,
+  };
+}
+
+export function dhikrTargetStreak(history: DhikrHistory, days = 90, now = new Date()) {
+  const reached = recentDhikrDayKeys(days, now).map((key) => isDailyDhikrTargetReached(history[key] ?? 0));
+  const currentStart = reached[0] ? 0 : 1;
+  let current = 0;
+  for (let index = currentStart; index < reached.length && reached[index]; index += 1) current += 1;
+  let best = 0;
+  let run = 0;
+  for (const complete of reached) {
+    run = complete ? run + 1 : 0;
+    best = Math.max(best, run);
+  }
+  return { current, best };
+}
+
 export function dhikrCountForDay(storedDay: string | null, count: number, date = new Date()): number {
   return storedDay === dayKey(date) ? Math.max(0, count) : 0;
 }
