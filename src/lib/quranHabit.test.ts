@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mergeQuranReadAyahs, quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys, recordAyahRead } from './quranHabit.ts';
+import { mergeQuranReadAyahs, quranCompletedSectionCount, quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys, recordAyahRead } from './quranHabit.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -80,6 +80,12 @@ test('filters Quran sections by incomplete and complete progress', () => {
   assert.equal(quranProgressFilterMatches(7, 7, 'complete'), true);
   assert.equal(quranProgressFilterMatches(0, 7, 'complete'), false);
   assert.equal(quranProgressFilterMatches(0, 0, 'all'), true);
+});
+
+test('counts only fully completed Quran sections', () => {
+  const sections = [{ id: 1, ayahCount: 7 }, { id: 2, ayahCount: 286 }, { id: 3, ayahCount: 200 }];
+  assert.equal(quranCompletedSectionCount({ 1: 7, 2: 285, 3: 201 }, sections), 2);
+  assert.equal(quranCompletedSectionCount({}, sections), 0);
 });
 
 test('finds the next unread ayah after the current reading position and wraps once', () => {
