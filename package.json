@@ -9,7 +9,7 @@
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
     "build:quran": "node scripts/build-quran.mjs",
-    "test": "node --experimental-strip-types --test src/lib/dates.test.ts src/lib/dhikr.test.ts src/lib/prayerTracking.test.ts src/lib/quranHabit.test.ts src/lib/ritual.test.ts src/services/purchases.test.ts src/services/prayerTimes.test.ts src/data/quran.integrity.test.ts"
+    "test": "node --experimental-strip-types --test src/lib/dates.test.ts src/lib/dhikr.test.ts src/lib/journal.test.ts src/lib/prayerTracking.test.ts src/lib/quranHabit.test.ts src/lib/ritual.test.ts src/services/purchases.test.ts src/services/prayerTimes.test.ts src/data/quran.integrity.test.ts"
   },
   "dependencies": {
     "@expo-google-fonts/figtree": "^0.2.3",

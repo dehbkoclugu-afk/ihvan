@@ -1,12 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { normalizeReflectionText, updateReflectionEntries, type ReflectionEntry } from '@/lib/journal';
 
-export interface ReflectionEntry { id: string; text: string; createdAt: string }
+export type { ReflectionEntry } from '@/lib/journal';
 
 interface JournalState {
   entries: ReflectionEntry[];
   add: (text: string) => void;
+  update: (id: string, text: string) => void;
   remove: (id: string) => void;
 }
 
@@ -14,7 +16,12 @@ export const useJournalStore = create<JournalState>()(
   persist(
     (set) => ({
       entries: [],
-      add: (text) => set((s) => ({ entries: [{ id: `${Date.now()}`, text: text.trim(), createdAt: new Date().toISOString() }, ...s.entries] })),
+      add: (text) => set((state) => {
+        const normalized = normalizeReflectionText(text);
+        if (!normalized) return state;
+        return { entries: [{ id: `${Date.now()}`, text: normalized, createdAt: new Date().toISOString() }, ...state.entries] };
+      }),
+      update: (id, text) => set((state) => ({ entries: updateReflectionEntries(state.entries, id, text) })),
       remove: (id) => set((s) => ({ entries: s.entries.filter((entry) => entry.id !== id) })),
     }),
     { name: 'ihvan-journal', storage: createJSONStorage(() => AsyncStorage) },
