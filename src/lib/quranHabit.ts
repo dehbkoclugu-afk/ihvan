@@ -41,6 +41,26 @@ export function quranSurahReadCounts(
   return counts;
 }
 
+export function quranSectionReadCounts(
+  orderedAyahKeys: readonly string[],
+  readAyahs: readonly string[] | undefined,
+  readingDays: QuranReadingDays,
+  sections: readonly { id: number; start: number; ayahCount: number }[],
+): Record<number, number> {
+  const read = new Set(mergeQuranReadAyahs(readAyahs, readingDays));
+  const counts: Record<number, number> = {};
+  for (const section of sections) {
+    const start = Math.max(0, Math.floor(section.start));
+    const end = Math.min(orderedAyahKeys.length, start + Math.max(0, Math.floor(section.ayahCount)));
+    let count = 0;
+    for (let index = start; index < end; index += 1) {
+      if (read.has(orderedAyahKeys[index])) count += 1;
+    }
+    if (count) counts[section.id] = count;
+  }
+  return counts;
+}
+
 export function quranNextUnreadKey(
   orderedAyahKeys: readonly string[],
   readAyahs: readonly string[] | undefined,

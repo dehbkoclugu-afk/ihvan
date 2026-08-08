@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mergeQuranReadAyahs, quranGoalPercent, quranNextUnreadKey, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSurahReadCounts, recentQuranDayKeys, recordAyahRead } from './quranHabit.ts';
+import { mergeQuranReadAyahs, quranGoalPercent, quranNextUnreadKey, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys, recordAyahRead } from './quranHabit.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -64,6 +64,13 @@ test('counts unique read ayahs per surah and ignores invalid persisted keys', ()
   const readingDays = { '2026-08-08': ['1:1', '2:1', '2:2', '2:99', 'bad'] };
   const counts = quranSurahReadCounts(['1:1', '1:2', '3:1', '0:1'], readingDays, [2, 3]);
   assert.deepEqual(counts, { 1: 2, 2: 2 });
+});
+
+test('counts read ayahs inside ordered Quran sections without double counting', () => {
+  const keys = ['1:1', '1:2', '2:1', '2:2', '2:3'];
+  const sections = [{ id: 1, start: 0, ayahCount: 2 }, { id: 2, start: 2, ayahCount: 3 }];
+  const readingDays = { '2026-08-08': ['1:1', '2:2', 'not-in-quran'] };
+  assert.deepEqual(quranSectionReadCounts(keys, ['1:1', '2:1'], readingDays, sections), { 1: 1, 2: 2 });
 });
 
 test('finds the next unread ayah after the current reading position and wraps once', () => {
