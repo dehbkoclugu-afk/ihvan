@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mergeQuranReadAyahs, quranGoalPercent, quranNextUnreadKey, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, recentQuranDayKeys, recordAyahRead } from './quranHabit.ts';
+import { mergeQuranReadAyahs, quranGoalPercent, quranNextUnreadKey, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSurahReadCounts, recentQuranDayKeys, recordAyahRead } from './quranHabit.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -58,6 +58,12 @@ test('calculates unique Quran reading coverage without double counting history',
   const readingDays = { '2026-08-08': ['1:1', '2:1'], '2026-08-07': ['1:1'] };
   assert.deepEqual(quranReadingCoverage(['1:1', '3:1'], readingDays, 10), { read: 3, total: 10, percent: 30 });
   assert.deepEqual(quranReadingCoverage(undefined, {}, 0), { read: 0, total: 0, percent: 0 });
+});
+
+test('counts unique read ayahs per surah and ignores invalid persisted keys', () => {
+  const readingDays = { '2026-08-08': ['1:1', '2:1', '2:2', '2:99', 'bad'] };
+  const counts = quranSurahReadCounts(['1:1', '1:2', '3:1', '0:1'], readingDays, [2, 3]);
+  assert.deepEqual(counts, { 1: 2, 2: 2 });
 });
 
 test('finds the next unread ayah after the current reading position and wraps once', () => {

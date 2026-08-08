@@ -6,7 +6,7 @@ import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { QURAN_AYAHS, QURAN_JUZS, QURAN_SURAHS, getAyah, mushafPositionPercent } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
-import { quranGoalPercent, quranNextUnreadKey, quranReadCount, quranReadingCoverage, quranReadingStreak, type QuranReadingGoal } from '@/lib/quranHabit';
+import { quranGoalPercent, quranNextUnreadKey, quranReadCount, quranReadingCoverage, quranReadingStreak, quranSurahReadCounts, type QuranReadingGoal } from '@/lib/quranHabit';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
@@ -16,6 +16,7 @@ function openAyah(surah: number, ayah: number) {
 }
 
 const QURAN_AYAH_KEYS = QURAN_AYAHS.map((ayah) => `${ayah.surah}:${ayah.ayah}`);
+const QURAN_SURAH_AYAH_COUNTS = QURAN_SURAHS.map((surah) => surah.ayahCount);
 
 export default function Quran() {
   const t = useTheme();
@@ -26,6 +27,7 @@ export default function Quran() {
   const goalPercent = quranGoalPercent(readToday, readingGoal);
   const readingStreak = quranReadingStreak(readingDays);
   const coverage = quranReadingCoverage(readAyahs, readingDays);
+  const surahReadCounts = useMemo(() => quranSurahReadCounts(readAyahs, readingDays, QURAN_SURAH_AYAH_COUNTS), [readAyahs, readingDays]);
   const nextUnreadKey = quranNextUnreadKey(QURAN_AYAH_KEYS, readAyahs, readingDays, lastRead ? `${lastRead.surah}:${lastRead.ayah}` : undefined);
   const nextUnread = nextUnreadKey ? getAyah(...nextUnreadKey.split(':').map(Number) as [number, number]) : undefined;
   const verseMatch = query.trim().match(/^(\d{1,3})\s*:\s*(\d{1,3})$/);
@@ -81,9 +83,10 @@ export default function Quran() {
 
     {browseMode === 'surahs' ? <>
     <SectionHeader title={query && !verseMatch ? `${surahs.length} sonuç` : 'Tüm sûreler'} />
-    <View style={{ gap: spacing.sm }}>{surahs.map((surah) => <Pressable key={surah.id} onPress={() => router.push({ pathname: '/surah/[id]', params: { id: `${surah.id}` } })} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', padding: spacing.lg, borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.inner, opacity: pressed ? 0.75 : 1 })}>
+    <View style={{ gap: spacing.sm }}>{surahs.map((surah) => <Pressable key={surah.id} accessibilityRole="button" accessibilityLabel={`${surah.transliteration}, ${surahReadCounts[surah.id] ?? 0} / ${surah.ayahCount} ayet okundu`} onPress={() => router.push({ pathname: '/surah/[id]', params: { id: `${surah.id}` } })} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', padding: spacing.lg, borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.inner, opacity: pressed ? 0.75 : 1 })}>
       <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: t.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: t.gold, fontFamily: fonts.sansBold }}>{surah.id}</Text></View>
-      <View style={{ flex: 1, marginLeft: spacing.md }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 16 }}>{surah.transliteration}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, marginTop: 2 }}>{surah.revelationPlace === 'meccan' ? 'Mekke' : 'Medine'} · {surah.ayahCount} ayet</Text></View>
+      <View style={{ flex: 1, marginLeft: spacing.md }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 16 }}>{surah.transliteration}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, marginTop: 2 }}>{surah.revelationPlace === 'meccan' ? 'Mekke' : 'Medine'} · {surah.ayahCount} ayet{surahReadCounts[surah.id] ? ` · ${surahReadCounts[surah.id]}/${surah.ayahCount} okundu` : ''}</Text></View>
+      {surahReadCounts[surah.id] === surah.ayahCount ? <Ionicons name="checkmark-circle" size={18} color={t.gold} style={{ marginRight: spacing.xs }} /> : null}
       <Text style={{ color: t.ink, fontSize: 20, writingDirection: 'rtl' }}>{surah.arabicName}</Text><Ionicons name="chevron-forward" size={17} color={t.inkFaint} style={{ marginLeft: spacing.sm }} />
     </Pressable>)}</View>
     {!surahs.length ? <Text style={{ color: t.inkSoft, textAlign: 'center', fontFamily: fonts.sans, marginVertical: spacing.xl }}>Sûre bulunamadı.</Text> : null}
