@@ -9,10 +9,7 @@
     "newArchEnabled": false,
     "ios": {
       "bundleIdentifier": "com.ihvan.quran",
-      "supportsTablet": true,
-      "infoPlist": {
-        "UIBackgroundModes": ["audio"]
-      }
+      "supportsTablet": true
     },
     "android": {
       "package": "com.ihvan.quran",
