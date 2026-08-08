@@ -5,7 +5,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { QURAN_SURAHS, getSurahAyahs } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
-import { dayKey } from '@/lib/dates';
+import { mergeQuranReadAyahs } from '@/lib/quranHabit';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
@@ -21,19 +21,22 @@ export default function SurahDetail() {
   const scrollRef = useRef<ScrollView>(null);
   const didScroll = useRef(false);
   const metrics = QURAN_TEXT_METRICS[useUserStore((state) => state.quranTextSize)];
-  const { lastRead, bookmarks, readingDays, markAyahRead, toggleBookmark } = useQuranProgressStore();
-  const readToday = readingDays[dayKey()] ?? [];
+  const { lastRead, bookmarks, readingDays, readAyahs, markAyahRead, toggleBookmark } = useQuranProgressStore();
   if (!surah) return <Screen><Text style={{ color: t.ink }}>Sûre bulunamadı.</Text></Screen>;
   const ayahs = getSurahAyahs(surahId);
+  const readKeys = new Set(mergeQuranReadAyahs(readAyahs, readingDays));
+  const readCount = ayahs.reduce((count, ayah) => count + Number(readKeys.has(`${ayah.surah}:${ayah.ayah}`)), 0);
+  const progress = surah.ayahCount ? Math.round((readCount / surah.ayahCount) * 100) : 0;
 
   return <Screen scrollRef={scrollRef}>
     <Pressable onPress={() => router.back()} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="arrow-back" size={20} color={t.ink} /></Pressable>
     <View style={{ alignItems: 'center', marginTop: spacing.xl }}><Text style={{ color: t.ink, fontSize: 34, writingDirection: 'rtl' }}>{surah.arabicName}</Text><Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 30, marginTop: spacing.sm }}>{surah.transliteration}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, marginTop: 5 }}>{surah.revelationPlace === 'meccan' ? 'Mekke' : 'Medine'} · {surah.ayahCount} ayet</Text></View>
+    <View style={{ backgroundColor: t.surface, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.lg }}><View style={{ flexDirection: 'row', alignItems: 'center' }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>Sûre ilerlemesi</Text><Text style={{ color: t.gold, fontFamily: fonts.sansBold, fontSize: 12, marginLeft: 'auto' }}>{readCount}/{surah.ayahCount} · %{progress}</Text></View><View style={{ height: 5, borderRadius: 3, backgroundColor: t.surfaceAlt, marginTop: spacing.sm }}><View style={{ width: `${progress}%`, height: 5, borderRadius: 3, backgroundColor: t.gold }} /></View></View>
     <View style={{ backgroundColor: t.goldSoft, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.xl }}><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18 }}>Şimdilik yalnızca doğrulanmış Arapça metin gösteriliyor. Meal ve tefsir için makine çevirisi kullanılmayacak.</Text></View>
     {ayahs.map((ayah, index) => {
       const key = `${ayah.surah}:${ayah.ayah}`;
       const bookmarked = bookmarks.includes(key);
-      const read = readToday.includes(key);
+      const read = readKeys.has(key);
       const isLastRead = lastRead?.surah === ayah.surah && lastRead.ayah === ayah.ayah;
       return <View key={key} onLayout={(event) => {
         if (!didScroll.current && targetAyah === ayah.ayah) {
