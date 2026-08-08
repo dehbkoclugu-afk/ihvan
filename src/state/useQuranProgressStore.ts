@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { recordAyahRead, type QuranReadingDays, type QuranReadingGoal } from '@/lib/quranHabit';
+import { recordAyahRead as recordReadingDay, type QuranReadingDays, type QuranReadingGoal } from '@/lib/quranHabit';
 
 export interface QuranPosition {
   surah: number;
@@ -15,6 +15,7 @@ interface QuranProgressState {
   readingDays: QuranReadingDays;
   readingGoal: QuranReadingGoal;
   setLastRead: (surah: number, ayah: number) => void;
+  recordAyahRead: (surah: number, ayah: number, date?: Date) => void;
   markAyahRead: (surah: number, ayah: number, date?: Date) => void;
   setReadingGoal: (goal: QuranReadingGoal) => void;
   toggleBookmark: (surah: number, ayah: number) => void;
@@ -30,9 +31,12 @@ export const useQuranProgressStore = create<QuranProgressState>()(
       readingDays: {},
       readingGoal: 5,
       setLastRead: (surah, ayah) => set({ lastRead: { surah, ayah, updatedAt: new Date().toISOString() } }),
+      recordAyahRead: (surah, ayah, date = new Date()) => set((state) => ({
+        readingDays: recordReadingDay(state.readingDays, keyFor(surah, ayah), date),
+      })),
       markAyahRead: (surah, ayah, date = new Date()) => set((state) => ({
         lastRead: { surah, ayah, updatedAt: date.toISOString() },
-        readingDays: recordAyahRead(state.readingDays, keyFor(surah, ayah), date),
+        readingDays: recordReadingDay(state.readingDays, keyFor(surah, ayah), date),
       })),
       setReadingGoal: (readingGoal) => set({ readingGoal }),
       toggleBookmark: (surah, ayah) => set((state) => {
