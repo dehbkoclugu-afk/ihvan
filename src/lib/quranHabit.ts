@@ -23,6 +23,23 @@ export function quranReadingCoverage(readAyahs: readonly string[] | undefined, r
   };
 }
 
+export function quranNextUnreadKey(
+  orderedAyahKeys: readonly string[],
+  readAyahs: readonly string[] | undefined,
+  readingDays: QuranReadingDays,
+  startAfterKey?: string,
+): string | undefined {
+  if (!orderedAyahKeys.length) return undefined;
+  const read = new Set(mergeQuranReadAyahs(readAyahs, readingDays));
+
+  const startIndex = startAfterKey ? orderedAyahKeys.indexOf(startAfterKey) : -1;
+  for (let offset = 1; offset <= orderedAyahKeys.length; offset += 1) {
+    const key = orderedAyahKeys[(startIndex + offset) % orderedAyahKeys.length];
+    if (!read.has(key)) return key;
+  }
+  return undefined;
+}
+
 export function recentQuranDayKeys(days: number, now = new Date()): string[] {
   return Array.from({ length: Math.max(0, days) }, (_, index) => {
     const date = new Date(now);
