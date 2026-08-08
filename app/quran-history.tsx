@@ -2,9 +2,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { Screen } from '@/components/Screen';
-import { QURAN_JUZS, QURAN_SURAHS } from '@/data/quran';
+import { QURAN_JUZS, QURAN_SURAHS, getAyah } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
-import { quranCompletedSectionCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys } from '@/lib/quranHabit';
+import { quranCompletedSectionCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys, recentQuranReads } from '@/lib/quranHabit';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
@@ -30,6 +30,10 @@ export default function QuranHistory() {
   const juzReadCounts = quranSectionReadCounts(QURAN_AYAH_KEYS, readAyahs, readingDays, QURAN_JUZS);
   const completedSurahs = quranCompletedSectionCount(surahReadCounts, QURAN_SURAHS);
   const completedJuzs = quranCompletedSectionCount(juzReadCounts, QURAN_JUZS);
+  const recentReads = recentQuranReads(readingDays, 8).map((read) => {
+    const [surah, ayah] = read.ayahKey.split(':').map(Number);
+    return { ...read, ayah: getAyah(surah, ayah) };
+  }).filter((read): read is typeof read & { ayah: NonNullable<typeof read.ayah> } => Boolean(read.ayah));
   const formatDay = new Intl.DateTimeFormat('tr-TR', { weekday: 'short', day: 'numeric', month: 'short' });
 
   return <Screen>
@@ -45,6 +49,11 @@ export default function QuranHistory() {
     <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: t.goldSoft, borderRadius: radius.inner, padding: spacing.lg, marginTop: spacing.md }}><Ionicons name="flame" size={22} color={t.gold} /><View style={{ marginLeft: spacing.sm, flex: 1 }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold }}>Kur’an okuma serisi</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 11, marginTop: 2 }}>Bugün veya dünden devam eden seri</Text></View><View style={{ alignItems: 'flex-end' }}><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 24 }}>{streak.current} gün</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 9 }}>90 günde en iyi {streak.best}</Text></View></View>
 
     <View style={{ backgroundColor: t.surface, borderRadius: radius.inner, padding: spacing.lg, marginTop: spacing.md }}><View style={{ flexDirection: 'row', alignItems: 'baseline' }}><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 24 }}>%{coverage.percent}</Text><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, marginLeft: spacing.sm, flex: 1 }}>tekil ayet kapsamı</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 10 }}>{coverage.read.toLocaleString('tr-TR')} / {coverage.total.toLocaleString('tr-TR')}</Text></View><View style={{ height: 5, borderRadius: 3, backgroundColor: t.surfaceAlt, marginTop: spacing.sm }}><View style={{ width: `${coverage.percent}%`, height: 5, borderRadius: 3, backgroundColor: t.gold }} /></View><View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}><View style={{ flex: 1, backgroundColor: t.goldSoft, borderRadius: radius.inner, padding: spacing.sm }}><Text style={{ color: t.gold, fontFamily: fonts.sansBold, fontSize: 15 }}>{completedSurahs}/114</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 9, marginTop: 2 }}>sûre tamamlandı</Text></View><View style={{ flex: 1, backgroundColor: t.goldSoft, borderRadius: radius.inner, padding: spacing.sm }}><Text style={{ color: t.gold, fontFamily: fonts.sansBold, fontSize: 15 }}>{completedJuzs}/30</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 9, marginTop: 2 }}>cüz tamamlandı</Text></View></View><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 10, marginTop: spacing.sm }}>Aynı ayet tekrar okunduğunda yalnızca bir kez sayılır.</Text></View>
+
+    {recentReads.length ? <><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 17, marginTop: spacing.xxl }}>Son okudukların</Text><View style={{ gap: spacing.xs, marginTop: spacing.md }}>{recentReads.map((read, index) => {
+      const surah = QURAN_SURAHS[read.ayah.surah - 1];
+      return <Pressable key={`${read.day}-${read.ayahKey}-${index}`} accessibilityRole="button" accessibilityLabel={`${surah.transliteration} ${read.ayahKey} ayetine dön`} onPress={() => router.push({ pathname: '/surah/[id]', params: { id: `${read.ayah.surah}`, ayah: `${read.ayah.ayah}` } })} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingHorizontal: spacing.md, borderRadius: radius.inner, backgroundColor: t.surface, opacity: pressed ? 0.7 : 1 })}><Ionicons name="time-outline" size={16} color={t.gold} /><View style={{ flex: 1, marginLeft: spacing.sm }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{surah.transliteration} · {read.ayahKey}</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 9, marginTop: 2 }}>{formatDay.format(dateFromKey(read.day))}</Text></View><Ionicons name="chevron-forward" size={16} color={t.inkFaint} /></Pressable>;
+    })}</View></> : null}
 
     <Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 17, marginTop: spacing.xxl }}>Son 30 gün</Text>
     <View style={{ gap: spacing.xs, marginTop: spacing.md }}>{days.map((key, index) => {
