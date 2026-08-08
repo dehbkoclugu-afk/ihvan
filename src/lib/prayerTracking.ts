@@ -34,6 +34,25 @@ export function prayerPercentFor(completions: PrayerCompletions, prayer: Tracked
   return Math.round((completed / keys.length) * 100);
 }
 
+export function isPrayerDayComplete(completed: readonly TrackedPrayerKey[] = []): boolean {
+  return TRACKED_PRAYERS.every((prayer) => completed.includes(prayer.key));
+}
+
+export function prayerCompletionStreak(completions: PrayerCompletions, days = 90, now = new Date()): { current: number; best: number } {
+  const complete = recentDayKeys(days, now).map((key) => isPrayerDayComplete(completions[key]));
+  const currentStart = complete[0] ? 0 : 1;
+  let current = 0;
+  for (let index = currentStart; index < complete.length && complete[index]; index += 1) current += 1;
+
+  let best = 0;
+  let run = 0;
+  for (const isComplete of complete) {
+    run = isComplete ? run + 1 : 0;
+    best = Math.max(best, run);
+  }
+  return { current, best };
+}
+
 export function prunePrayerCompletions(completions: PrayerCompletions, keepDays = 90, now = new Date()): PrayerCompletions {
   const keep = new Set(recentDayKeys(keepDays, now));
   return Object.fromEntries(Object.entries(completions).filter(([key]) => keep.has(key)));

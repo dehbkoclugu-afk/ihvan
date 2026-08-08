@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { prayerCompletionPercent, prayerPercentFor, prunePrayerCompletions, recentDayKeys } from './prayerTracking.ts';
+import { isPrayerDayComplete, prayerCompletionPercent, prayerCompletionStreak, prayerPercentFor, prunePrayerCompletions, recentDayKeys } from './prayerTracking.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -34,4 +34,29 @@ test('prunes completion history outside the retention window', () => {
     '2026-08-08': ['fajr'],
     '2026-08-07': ['isha'],
   });
+});
+
+test('requires all five distinct prayers for a complete prayer day', () => {
+  assert.equal(isPrayerDayComplete(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']), true);
+  assert.equal(isPrayerDayComplete(['fajr', 'dhuhr', 'asr', 'maghrib']), false);
+  assert.equal(isPrayerDayComplete(['fajr', 'fajr', 'dhuhr', 'asr', 'maghrib']), false);
+});
+
+test('calculates current and best five-prayer streaks', () => {
+  const full = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
+  const completions = {
+    '2026-08-08': [...full],
+    '2026-08-07': [...full],
+    '2026-08-05': [...full],
+    '2026-08-04': [...full],
+    '2026-08-03': [...full],
+  };
+  assert.deepEqual(prayerCompletionStreak(completions, 7, now), { current: 2, best: 3 });
+});
+
+test('keeps yesterday full-prayer streak active until a whole day is missed', () => {
+  const full = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
+  const completions = { '2026-08-07': [...full], '2026-08-06': [...full] };
+  assert.deepEqual(prayerCompletionStreak(completions, 4, now), { current: 2, best: 2 });
+  assert.deepEqual(prayerCompletionStreak(completions, 5, new Date(2026, 7, 9, 12)), { current: 0, best: 2 });
 });
