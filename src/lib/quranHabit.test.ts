@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { quranGoalPercent, quranReadCount, quranReadingStreak, quranReadingSummary, recentQuranDayKeys, recordAyahRead } from './quranHabit.ts';
+import { mergeQuranReadAyahs, quranGoalPercent, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, recentQuranDayKeys, recordAyahRead } from './quranHabit.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -47,4 +47,15 @@ test('keeps yesterday Quran streak active until today is missed', () => {
   const stale = { ...yesterdayActive, '2026-08-05': [], '2026-08-04': ['1:3'] };
   assert.deepEqual(quranReadingStreak(yesterdayActive, 4, now), { current: 2, best: 2 });
   assert.deepEqual(quranReadingStreak(stale, 5, new Date(2026, 7, 9, 12)), { current: 0, best: 2 });
+});
+
+test('merges permanent Quran coverage with existing reading history uniquely', () => {
+  const readingDays = { '2026-08-08': ['1:1', '2:1'], '2026-08-07': ['1:1', '2:2'] };
+  assert.deepEqual(mergeQuranReadAyahs(['1:1'], readingDays, '2:3'), ['1:1', '2:1', '2:2', '2:3']);
+});
+
+test('calculates unique Quran reading coverage without double counting history', () => {
+  const readingDays = { '2026-08-08': ['1:1', '2:1'], '2026-08-07': ['1:1'] };
+  assert.deepEqual(quranReadingCoverage(['1:1', '3:1'], readingDays, 10), { read: 3, total: 10, percent: 30 });
+  assert.deepEqual(quranReadingCoverage(undefined, {}, 0), { read: 0, total: 0, percent: 0 });
 });
