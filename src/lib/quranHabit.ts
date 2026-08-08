@@ -23,6 +23,24 @@ export function quranReadingCoverage(readAyahs: readonly string[] | undefined, r
   };
 }
 
+export function quranSurahReadCounts(
+  readAyahs: readonly string[] | undefined,
+  readingDays: QuranReadingDays,
+  surahAyahCounts: readonly number[],
+): Record<number, number> {
+  const counts: Record<number, number> = {};
+  for (const key of mergeQuranReadAyahs(readAyahs, readingDays)) {
+    const match = key.match(/^(\d+):(\d+)$/);
+    if (!match) continue;
+    const surah = Number(match[1]);
+    const ayah = Number(match[2]);
+    const ayahCount = surahAyahCounts[surah - 1];
+    if (!ayahCount || ayah < 1 || ayah > ayahCount) continue;
+    counts[surah] = (counts[surah] ?? 0) + 1;
+  }
+  return counts;
+}
+
 export function quranNextUnreadKey(
   orderedAyahKeys: readonly string[],
   readAyahs: readonly string[] | undefined,
