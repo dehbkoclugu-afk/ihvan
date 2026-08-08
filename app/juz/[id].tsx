@@ -11,6 +11,7 @@ import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
 import { QURAN_TEXT_METRICS } from '@/lib/quranDisplay';
 import { useUserStore } from '@/state/useUserStore';
+import { selectionFeedback } from '@/services/haptics';
 
 export default function JuzDetail() {
   const t = useTheme();
@@ -48,8 +49,8 @@ export default function JuzDetail() {
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ minWidth: 42, height: 34, paddingHorizontal: 7, borderRadius: 17, backgroundColor: t.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: t.gold, fontFamily: fonts.sansBold, fontSize: 11 }}>{ayah.surah}:{ayah.ayah}</Text></View>
             <View style={{ flex: 1 }} />
-            <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: bookmarked }} accessibilityLabel={`${ayah.surah}:${ayah.ayah} yer imi`} hitSlop={8} onPress={() => toggleBookmark(ayah.surah, ayah.ayah)} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: bookmarked ? t.goldSoft : t.surface }}><Ionicons name={bookmarked ? 'bookmark' : 'bookmark-outline'} size={18} color={bookmarked ? t.gold : t.inkSoft} /></Pressable>
-            <Pressable accessibilityRole="button" accessibilityState={{ selected: read }} accessibilityLabel={`${ayah.surah}:${ayah.ayah} ayetini okudum`} hitSlop={8} onPress={() => markAyahRead(ayah.surah, ayah.ayah)} style={{ marginLeft: spacing.sm, height: 38, paddingHorizontal: spacing.md, borderRadius: radius.pill, flexDirection: 'row', gap: 5, alignItems: 'center', backgroundColor: isLastRead ? t.gold : read ? t.goldSoft : t.surface }}><Ionicons name={read ? 'checkmark' : 'checkmark-outline'} size={15} color={isLastRead ? t.onGold : read ? t.gold : t.inkSoft} /><Text style={{ color: isLastRead ? t.onGold : read ? t.gold : t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10 }}>{isLastRead ? 'Kaldığın yer' : read ? 'Okundu' : 'Okudum'}</Text></Pressable>
+            <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: bookmarked }} accessibilityLabel={`${ayah.surah}:${ayah.ayah} yer imi`} hitSlop={8} onPress={() => { selectionFeedback(); toggleBookmark(ayah.surah, ayah.ayah); }} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: bookmarked ? t.goldSoft : t.surface }}><Ionicons name={bookmarked ? 'bookmark' : 'bookmark-outline'} size={18} color={bookmarked ? t.gold : t.inkSoft} /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityState={{ selected: read }} accessibilityLabel={`${ayah.surah}:${ayah.ayah} ayetini okudum`} hitSlop={8} onPress={() => { selectionFeedback(); markAyahRead(ayah.surah, ayah.ayah); }} style={{ marginLeft: spacing.sm, height: 38, paddingHorizontal: spacing.md, borderRadius: radius.pill, flexDirection: 'row', gap: 5, alignItems: 'center', backgroundColor: isLastRead ? t.gold : read ? t.goldSoft : t.surface }}><Ionicons name={read ? 'checkmark' : 'checkmark-outline'} size={15} color={isLastRead ? t.onGold : read ? t.gold : t.inkSoft} /><Text style={{ color: isLastRead ? t.onGold : read ? t.gold : t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10 }}>{isLastRead ? 'Kaldığın yer' : read ? 'Okundu' : 'Okudum'}</Text></Pressable>
           </View>
           <Text selectable style={{ color: t.ink, fontSize: metrics.fontSize, lineHeight: metrics.lineHeight, textAlign: 'right', writingDirection: 'rtl', marginTop: spacing.md }}>{ayah.text}</Text>
         </View>
