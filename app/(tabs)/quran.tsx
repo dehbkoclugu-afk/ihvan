@@ -6,7 +6,7 @@ import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { QURAN_AYAHS, QURAN_JUZS, QURAN_SURAHS, getAyah, mushafPositionPercent } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
-import { quranGoalPercent, quranNextUnreadKey, quranReadCount, quranReadingCoverage, quranReadingStreak, quranSurahReadCounts, type QuranReadingGoal } from '@/lib/quranHabit';
+import { quranGoalPercent, quranNextUnreadKey, quranReadCount, quranReadingCoverage, quranReadingStreak, quranSectionReadCounts, quranSurahReadCounts, type QuranReadingGoal } from '@/lib/quranHabit';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
@@ -28,6 +28,7 @@ export default function Quran() {
   const readingStreak = quranReadingStreak(readingDays);
   const coverage = quranReadingCoverage(readAyahs, readingDays);
   const surahReadCounts = useMemo(() => quranSurahReadCounts(readAyahs, readingDays, QURAN_SURAH_AYAH_COUNTS), [readAyahs, readingDays]);
+  const juzReadCounts = useMemo(() => quranSectionReadCounts(QURAN_AYAH_KEYS, readAyahs, readingDays, QURAN_JUZS), [readAyahs, readingDays]);
   const nextUnreadKey = quranNextUnreadKey(QURAN_AYAH_KEYS, readAyahs, readingDays, lastRead ? `${lastRead.surah}:${lastRead.ayah}` : undefined);
   const nextUnread = nextUnreadKey ? getAyah(...nextUnreadKey.split(':').map(Number) as [number, number]) : undefined;
   const verseMatch = query.trim().match(/^(\d{1,3})\s*:\s*(\d{1,3})$/);
@@ -94,9 +95,10 @@ export default function Quran() {
       <SectionHeader title="30 cüz" />
       <View style={{ gap: spacing.sm }}>{QURAN_JUZS.map((juz) => {
         const startSurah = QURAN_SURAHS[juz.startSurah - 1];
-        return <Pressable key={juz.id} onPress={() => router.push({ pathname: '/juz/[id]', params: { id: `${juz.id}` } })} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', padding: spacing.lg, borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.inner, opacity: pressed ? 0.75 : 1 })}>
+        return <Pressable key={juz.id} accessibilityRole="button" accessibilityLabel={`${juz.id}. Cüz, ${juzReadCounts[juz.id] ?? 0} / ${juz.ayahCount} ayet okundu`} onPress={() => router.push({ pathname: '/juz/[id]', params: { id: `${juz.id}` } })} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', padding: spacing.lg, borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.inner, opacity: pressed ? 0.75 : 1 })}>
           <View style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: t.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: t.gold, fontFamily: fonts.sansBold }}>{juz.id}</Text></View>
-          <View style={{ flex: 1, marginLeft: spacing.md }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 16 }}>{juz.id}. Cüz</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, marginTop: 2 }}>{startSurah.transliteration} · {juz.startSurah}:{juz.startAyah} · {juz.ayahCount} ayet</Text></View>
+          <View style={{ flex: 1, marginLeft: spacing.md }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 16 }}>{juz.id}. Cüz</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, marginTop: 2 }}>{startSurah.transliteration} · {juz.startSurah}:{juz.startAyah} · {juz.ayahCount} ayet{juzReadCounts[juz.id] ? ` · ${juzReadCounts[juz.id]}/${juz.ayahCount} okundu` : ''}</Text></View>
+          {juzReadCounts[juz.id] === juz.ayahCount ? <Ionicons name="checkmark-circle" size={18} color={t.gold} style={{ marginRight: spacing.xs }} /> : null}
           <Ionicons name="chevron-forward" size={17} color={t.inkFaint} />
         </Pressable>;
       })}</View>
