@@ -15,6 +15,7 @@ import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { prayerCompletionPercent } from '@/lib/prayerTracking';
 import { quranReadingCoverage, quranReadingStreak } from '@/lib/quranHabit';
 import { buildUserDataExport } from '@/lib/userData';
+import { normalizeUserName } from '@/lib/userProfile';
 import { openSubscriptionManagement } from '@/services/purchases';
 import { activeStreakCount } from '@/lib/dates';
 import type { QuranTextSize } from '@/lib/quranDisplay';
@@ -47,7 +48,7 @@ export default function Profile() {
   useEffect(() => { setNameDraft(name); }, [name]);
 
   const saveName = () => {
-    const normalized = nameDraft.replace(/\s+/g, ' ').trim().slice(0, 50);
+    const normalized = normalizeUserName(nameDraft);
     setName(normalized);
     setNameDraft(normalized);
   };

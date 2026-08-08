@@ -6,8 +6,10 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useTheme, useThemeName } from '@/hooks/useTheme';
+import { useUserStoreHydrated } from '@/hooks/useUserStoreHydrated';
 import { initPurchases } from '@/services/purchases';
 import { configurePrayerNotificationHandler } from '@/services/prayerNotifications';
 
@@ -17,11 +19,13 @@ configurePrayerNotificationHandler();
 export default function RootLayout() {
   const t = useTheme();
   const theme = useThemeName();
+  const userStoreHydrated = useUserStoreHydrated();
   const [loaded, error] = useFonts({ ...Ionicons.font, Fraunces_400Regular, Fraunces_600SemiBold, Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold, Figtree_700Bold });
+  const hydrationReady = Platform.OS === 'web' || userStoreHydrated;
 
   useEffect(() => { initPurchases(); }, []);
-  useEffect(() => { if (loaded || error) SplashScreen.hideAsync().catch(() => {}); }, [loaded, error]);
-  if (!loaded && !error) return null;
+  useEffect(() => { if ((loaded || error) && hydrationReady) SplashScreen.hideAsync().catch(() => {}); }, [hydrationReady, loaded, error]);
+  if ((!loaded && !error) || !hydrationReady) return null;
 
   return <GestureHandlerRootView style={{ flex: 1 }}>
     <StatusBar style={theme === 'vigil' ? 'light' : 'dark'} />
