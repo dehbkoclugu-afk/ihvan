@@ -9,7 +9,18 @@ test('release config has no placeholder credentials or background location', () 
   const serialized = JSON.stringify({ appConfig, easConfig });
   assert.equal(serialized.includes('REPLACE_WITH_'), false);
   assert.equal(serialized.includes('ACCESS_BACKGROUND_LOCATION'), false);
-  assert.equal(serialized.includes('locationAlwaysAndWhenInUsePermission'), false);
+
+  const plugins = appConfig.expo.plugins as unknown[];
+  const locationPlugin = plugins.find(
+    (plugin): plugin is [string, Record<string, unknown>] => Array.isArray(plugin) && plugin[0] === 'expo-location',
+  );
+
+  assert.ok(locationPlugin, 'expo-location plugin must be configured');
+  assert.equal(locationPlugin[1].locationAlwaysPermission, false);
+  assert.equal(locationPlugin[1].locationAlwaysAndWhenInUsePermission, false);
+  assert.equal(locationPlugin[1].isIosBackgroundLocationEnabled, false);
+  assert.equal(locationPlugin[1].isAndroidBackgroundLocationEnabled, false);
+  assert.equal(locationPlugin[1].isAndroidForegroundServiceEnabled, false);
 });
 
 test('release branding assets referenced by Expo exist', () => {

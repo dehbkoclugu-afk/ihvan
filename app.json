@@ -30,7 +30,14 @@
       "expo-font",
       "expo-asset",
       "expo-localization",
-      ["expo-location", { "locationWhenInUsePermission": "İhvan, bulunduğun yere göre namaz vakitlerini ve kıble yönünü hesaplamak için konumunu kullanır." }],
+      ["expo-location", {
+        "locationWhenInUsePermission": "İhvan, bulunduğun yere göre namaz vakitlerini ve kıble yönünü hesaplamak için konumunu kullanır.",
+        "locationAlwaysPermission": false,
+        "locationAlwaysAndWhenInUsePermission": false,
+        "isIosBackgroundLocationEnabled": false,
+        "isAndroidBackgroundLocationEnabled": false,
+        "isAndroidForegroundServiceEnabled": false
+      }],
       ["expo-notifications", { "color": "#2D8C72", "icon": "./assets/notification-icon.png" }],
       ["expo-splash-screen", { "backgroundColor": "#164B42", "image": "./assets/brand-mark.png", "imageWidth": 180 }]
     ],
