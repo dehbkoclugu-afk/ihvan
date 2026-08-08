@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { useTheme } from '@/hooks/useTheme';
@@ -10,6 +11,7 @@ import { usePrayerTrackingStore } from '@/state/usePrayerTrackingStore';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { prayerCompletionPercent } from '@/lib/prayerTracking';
 import { quranReadingCoverage, quranReadingStreak } from '@/lib/quranHabit';
+import { openSubscriptionManagement } from '@/services/purchases';
 import { activeStreakCount } from '@/lib/dates';
 import type { QuranTextSize } from '@/lib/quranDisplay';
 import { fonts } from '@/theme/typography';
@@ -18,6 +20,7 @@ import { radius, spacing, type ThemeName } from '@/theme/tokens';
 export default function Profile() {
   const t = useTheme();
   const isPlus = useEntitlementStore((s) => s.isPlus);
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
   const { count, bestCount, lastTickDay } = useStreakStore();
   const streakCount = activeStreakCount(lastTickDay, count);
   const pref = useUserStore((s) => s.themePreference);
@@ -41,6 +44,7 @@ export default function Profile() {
     <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>{options.map((option) => <Pressable key={option.id} onPress={() => setPref(option.id)} style={{ flex: 1, paddingVertical: 11, borderRadius: radius.pill, alignItems: 'center', backgroundColor: pref === option.id ? t.gold : t.surface }}><Text style={{ color: pref === option.id ? t.onGold : t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{option.label}</Text></Pressable>)}</View>
     <Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 18, marginTop: spacing.xxl }}>Kur’an yazı boyutu</Text>
     <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>{quranSizes.map((option) => <Pressable key={option.id} accessibilityRole="radio" accessibilityState={{ selected: quranTextSize === option.id }} onPress={() => setQuranTextSize(option.id)} style={{ flex: 1, paddingVertical: 11, borderRadius: radius.pill, alignItems: 'center', backgroundColor: quranTextSize === option.id ? t.gold : t.surface }}><Text style={{ color: quranTextSize === option.id ? t.onGold : t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{option.label}</Text></Pressable>)}</View>
-    <Pressable onPress={() => router.push('/paywall')} style={{ marginTop: spacing.xxl, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.card, padding: spacing.xl }}><Text style={{ color: t.gold, fontFamily: fonts.sansBold, fontSize: 12, letterSpacing: 1.4 }}>{isPlus ? 'İHVAN PLUS AKTİF' : 'İHVAN PLUS'}</Text><Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 22, marginTop: spacing.sm }}>{isPlus ? 'Desteğin için teşekkürler.' : 'Derinleşme araçlarını aç.'}</Text></Pressable>
+    <Pressable accessibilityRole="button" accessibilityLabel={isPlus ? 'İhvan Plus aboneliğini mağazada yönet' : 'İhvan Plus planlarını gör'} onPress={() => { setSubscriptionError(null); if (!isPlus) { router.push('/paywall'); return; } void openSubscriptionManagement().catch(() => setSubscriptionError('Mağaza abonelik ayarları açılamadı.')); }} style={({ pressed }) => ({ marginTop: spacing.xxl, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.card, padding: spacing.xl, opacity: pressed ? 0.75 : 1 })}><View style={{ flexDirection: 'row', alignItems: 'center' }}><View style={{ flex: 1 }}><Text style={{ color: t.gold, fontFamily: fonts.sansBold, fontSize: 12, letterSpacing: 1.4 }}>{isPlus ? 'İHVAN PLUS AKTİF' : 'İHVAN PLUS'}</Text><Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 22, marginTop: spacing.sm }}>{isPlus ? 'Desteğin için teşekkürler.' : 'İhvan Plus planlarını gör.'}</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.xs }}>{isPlus ? 'Mağazada yönet' : 'Plan ve fiyatları görüntüle'}</Text></View><Ionicons name="chevron-forward" size={18} color={t.inkFaint} /></View></Pressable>
+    {subscriptionError ? <Text accessibilityRole="alert" style={{ color: t.danger, fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.sm }}>{subscriptionError}</Text> : null}
   </Screen>;
 }
