@@ -29,6 +29,12 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Expo doctor
+        run: npx expo-doctor@1.20.1
+
+      - name: Validate Expo config
+        run: npx expo config --type public > /dev/null
+
       - name: Typecheck
         run: npm run typecheck
 
