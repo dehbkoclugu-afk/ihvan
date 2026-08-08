@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isPrayerDayComplete, prayerCompletionPercent, prayerCompletionStreak, prayerPercentFor, prunePrayerCompletions, recentDayKeys } from './prayerTracking.ts';
+import { isPrayerDayComplete, prayerCompletionPercent, prayerCompletionStreak, prayerDayFilterMatches, prayerPercentFor, prunePrayerCompletions, recentDayKeys } from './prayerTracking.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -40,6 +40,14 @@ test('requires all five distinct prayers for a complete prayer day', () => {
   assert.equal(isPrayerDayComplete(['fajr', 'dhuhr', 'asr', 'maghrib', 'isha']), true);
   assert.equal(isPrayerDayComplete(['fajr', 'dhuhr', 'asr', 'maghrib']), false);
   assert.equal(isPrayerDayComplete(['fajr', 'fajr', 'dhuhr', 'asr', 'maghrib']), false);
+});
+
+test('filters prayer days by incomplete and complete state', () => {
+  const complete = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
+  assert.equal(prayerDayFilterMatches(complete, 'complete'), true);
+  assert.equal(prayerDayFilterMatches(complete, 'incomplete'), false);
+  assert.equal(prayerDayFilterMatches(['fajr', 'dhuhr'], 'incomplete'), true);
+  assert.equal(prayerDayFilterMatches([], 'all'), true);
 });
 
 test('calculates current and best five-prayer streaks', () => {
