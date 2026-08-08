@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mergeQuranReadAyahs, quranCompletedSectionCount, quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys, recordAyahRead } from './quranHabit.ts';
+import { mergeQuranReadAyahs, quranCompletedSectionCount, quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys, recentQuranReads, recordAyahRead } from './quranHabit.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -27,6 +27,16 @@ test('summarizes Quran reading over a bounded recent window', () => {
   const readingDays = { '2026-08-08': ['2:1', '2:2'], '2026-08-07': [], '2026-08-06': ['1:1'], '2026-08-01': ['3:1'] };
   assert.deepEqual(recentQuranDayKeys(3, now), ['2026-08-08', '2026-08-07', '2026-08-06']);
   assert.deepEqual(quranReadingSummary(readingDays, 3, now), { ayahs: 3, activeDays: 2 });
+});
+
+test('returns recent Quran reads newest day and newest ayah first', () => {
+  const readingDays = { '2026-08-07': ['1:1'], '2026-08-08': ['2:1', '2:2'], '2026-08-06': ['3:1'] };
+  assert.deepEqual(recentQuranReads(readingDays, 3), [
+    { day: '2026-08-08', ayahKey: '2:2' },
+    { day: '2026-08-08', ayahKey: '2:1' },
+    { day: '2026-08-07', ayahKey: '1:1' },
+  ]);
+  assert.deepEqual(recentQuranReads(readingDays, 0), []);
 });
 
 test('calculates current and best Quran reading streaks', () => {

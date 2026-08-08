@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useMemo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { QURAN_SURAHS, getAyah } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
@@ -13,19 +13,30 @@ import { useUserStore } from '@/state/useUserStore';
 
 export default function Bookmarks() {
   const t = useTheme();
+  const [query, setQuery] = useState('');
   const { bookmarks, toggleBookmark } = useQuranProgressStore();
   const metrics = QURAN_TEXT_METRICS[useUserStore((state) => state.quranTextSize)];
   const ayahs = useMemo(() => bookmarks.map((key) => {
     const [surah, ayah] = key.split(':').map(Number);
     return getAyah(surah, ayah);
   }).filter((ayah): ayah is NonNullable<typeof ayah> => Boolean(ayah)), [bookmarks]);
+  const visibleAyahs = useMemo(() => {
+    const needle = query.trim().toLocaleLowerCase('tr-TR');
+    if (!needle) return ayahs;
+    return ayahs.filter((ayah) => {
+      const surah = QURAN_SURAHS[ayah.surah - 1];
+      return `${surah.transliteration} ${ayah.surah} ${ayah.surah}:${ayah.ayah}`.toLocaleLowerCase('tr-TR').includes(needle);
+    });
+  }, [ayahs, query]);
 
   return <Screen>
     <Pressable accessibilityLabel="Geri" onPress={() => router.back()} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="arrow-back" size={20} color={t.ink} /></Pressable>
     <Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 32, marginTop: spacing.xl }}>Yer imleri</Text>
     <Text style={{ color: t.inkSoft, fontFamily: fonts.sans, lineHeight: 21, marginTop: 6 }}>{ayahs.length ? `${ayahs.length} kayıtlı ayet` : 'Henüz kayıtlı ayetin yok.'}</Text>
 
-    {!ayahs.length ? <View style={{ backgroundColor: t.surface, borderRadius: radius.card, padding: spacing.xxl, alignItems: 'center', marginTop: spacing.xxl }}><Ionicons name="bookmark-outline" size={30} color={t.gold} /><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 16, marginTop: spacing.md }}>Okurken saklamak istediğin ayetlere yer imi ekleyebilirsin.</Text><Pressable onPress={() => router.replace('/(tabs)/quran')} style={{ backgroundColor: t.gold, borderRadius: radius.pill, paddingHorizontal: spacing.xl, paddingVertical: 11, marginTop: spacing.lg }}><Text style={{ color: t.onGold, fontFamily: fonts.sansBold }}>Kur’an’a git</Text></Pressable></View> : <View style={{ gap: spacing.md, marginTop: spacing.xl }}>{ayahs.map((ayah) => {
+    {ayahs.length ? <View style={{ marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: t.border, backgroundColor: t.surface, borderRadius: radius.inner, paddingHorizontal: spacing.md }}><Ionicons name="search-outline" size={18} color={t.inkFaint} /><TextInput value={query} onChangeText={setQuery} placeholder="Sûre adı veya 2:255" placeholderTextColor={t.inkFaint} autoCapitalize="none" style={{ flex: 1, color: t.ink, fontFamily: fonts.sans, paddingHorizontal: spacing.sm, paddingVertical: 12 }} />{query ? <Pressable accessibilityLabel="Aramayı temizle" onPress={() => setQuery('')}><Ionicons name="close-circle" size={18} color={t.inkFaint} /></Pressable> : null}</View> : null}
+
+    {!ayahs.length ? <View style={{ backgroundColor: t.surface, borderRadius: radius.card, padding: spacing.xxl, alignItems: 'center', marginTop: spacing.xxl }}><Ionicons name="bookmark-outline" size={30} color={t.gold} /><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 16, marginTop: spacing.md }}>Okurken saklamak istediğin ayetlere yer imi ekleyebilirsin.</Text><Pressable onPress={() => router.replace('/(tabs)/quran')} style={{ backgroundColor: t.gold, borderRadius: radius.pill, paddingHorizontal: spacing.xl, paddingVertical: 11, marginTop: spacing.lg }}><Text style={{ color: t.onGold, fontFamily: fonts.sansBold }}>Kur’an’a git</Text></Pressable></View> : !visibleAyahs.length ? <View style={{ backgroundColor: t.surface, borderRadius: radius.inner, padding: spacing.xl, alignItems: 'center', marginTop: spacing.lg }}><Ionicons name="search-outline" size={24} color={t.inkFaint} /><Text style={{ color: t.inkSoft, fontFamily: fonts.sansSemiBold, marginTop: spacing.sm }}>Bu aramada yer imi bulunamadı.</Text></View> : <View style={{ gap: spacing.md, marginTop: spacing.xl }}>{visibleAyahs.map((ayah) => {
       const surah = QURAN_SURAHS[ayah.surah - 1];
       const reference = `${surah.transliteration} · ${ayah.surah}:${ayah.ayah}`;
       return <View key={`${ayah.surah}:${ayah.ayah}`} style={{ backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.card, padding: spacing.lg }}>

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useRef } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useRef, useState } from 'react';
+import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { QuranTextSizeControl } from '@/components/QuranTextSizeControl';
 import { Screen } from '@/components/Screen';
 import { QURAN_SURAHS, getSurahAyahs } from '@/data/quran';
@@ -21,6 +21,8 @@ export default function SurahDetail() {
   const surah = QURAN_SURAHS.find((item) => item.id === surahId);
   const scrollRef = useRef<ScrollView>(null);
   const didScroll = useRef(false);
+  const ayahOffsets = useRef<Record<number, number>>({});
+  const [jumpInput, setJumpInput] = useState('');
   const metrics = QURAN_TEXT_METRICS[useUserStore((state) => state.quranTextSize)];
   const { lastRead, bookmarks, readingDays, readAyahs, markAyahRead, toggleBookmark } = useQuranProgressStore();
   if (!surah) return <Screen><Text style={{ color: t.ink }}>Sûre bulunamadı.</Text></Screen>;
@@ -30,12 +32,20 @@ export default function SurahDetail() {
   const progress = surah.ayahCount ? Math.round((readCount / surah.ayahCount) * 100) : 0;
   const previousSurah = QURAN_SURAHS[surahId - 2];
   const nextSurah = QURAN_SURAHS[surahId];
+  const jumpAyah = Number(jumpInput);
+  const canJump = Number.isInteger(jumpAyah) && jumpAyah >= 1 && jumpAyah <= surah.ayahCount;
+  const jumpToAyah = () => {
+    if (!canJump) return;
+    const y = ayahOffsets.current[jumpAyah];
+    if (typeof y === 'number') scrollRef.current?.scrollTo({ y: Math.max(0, y - spacing.md), animated: true });
+  };
 
   return <Screen scrollRef={scrollRef}>
     <Pressable onPress={() => router.back()} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="arrow-back" size={20} color={t.ink} /></Pressable>
     <View style={{ alignItems: 'center', marginTop: spacing.xl }}><Text style={{ color: t.ink, fontSize: 34, writingDirection: 'rtl' }}>{surah.arabicName}</Text><Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 30, marginTop: spacing.sm }}>{surah.transliteration}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, marginTop: 5 }}>{surah.revelationPlace === 'meccan' ? 'Mekke' : 'Medine'} · {surah.ayahCount} ayet</Text></View>
     <View style={{ backgroundColor: t.surface, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.lg }}><View style={{ flexDirection: 'row', alignItems: 'center' }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>Sûre ilerlemesi</Text><Text style={{ color: t.gold, fontFamily: fonts.sansBold, fontSize: 12, marginLeft: 'auto' }}>{readCount}/{surah.ayahCount} · %{progress}</Text></View><View style={{ height: 5, borderRadius: 3, backgroundColor: t.surfaceAlt, marginTop: spacing.sm }}><View style={{ width: `${progress}%`, height: 5, borderRadius: 3, backgroundColor: t.gold }} /></View></View>
     <QuranTextSizeControl />
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md }}><View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 42, borderWidth: 1, borderColor: canJump ? t.gold : t.border, backgroundColor: t.surface, borderRadius: radius.inner, paddingHorizontal: spacing.md }}><Ionicons name="locate-outline" size={17} color={t.inkFaint} /><TextInput value={jumpInput} onChangeText={setJumpInput} onSubmitEditing={jumpToAyah} keyboardType="number-pad" placeholder={`Ayet no (1–${surah.ayahCount})`} placeholderTextColor={t.inkFaint} style={{ flex: 1, color: t.ink, fontFamily: fonts.sans, paddingHorizontal: spacing.sm, paddingVertical: 9 }} /></View><Pressable accessibilityRole="button" accessibilityLabel="Ayet numarasına git" accessibilityState={{ disabled: !canJump }} disabled={!canJump} onPress={jumpToAyah} style={({ pressed }) => ({ minHeight: 42, paddingHorizontal: spacing.lg, borderRadius: radius.inner, alignItems: 'center', justifyContent: 'center', backgroundColor: canJump ? t.gold : t.surfaceAlt, opacity: pressed ? 0.75 : 1 })}><Text style={{ color: canJump ? t.onGold : t.inkFaint, fontFamily: fonts.sansBold, fontSize: 12 }}>Git</Text></Pressable></View>
     <View style={{ backgroundColor: t.goldSoft, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.xl }}><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18 }}>Şimdilik yalnızca doğrulanmış Arapça metin gösteriliyor. Meal ve tefsir için makine çevirisi kullanılmayacak.</Text></View>
     {ayahs.map((ayah, index) => {
       const key = `${ayah.surah}:${ayah.ayah}`;
@@ -43,6 +53,7 @@ export default function SurahDetail() {
       const read = readKeys.has(key);
       const isLastRead = lastRead?.surah === ayah.surah && lastRead.ayah === ayah.ayah;
       return <View key={key} onLayout={(event) => {
+        ayahOffsets.current[ayah.ayah] = event.nativeEvent.layout.y;
         if (!didScroll.current && targetAyah === ayah.ayah) {
           didScroll.current = true;
           const y = Math.max(0, event.nativeEvent.layout.y - spacing.md);

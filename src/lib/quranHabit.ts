@@ -4,6 +4,11 @@ export type QuranReadingDays = Record<string, string[]>;
 export type QuranReadingGoal = 5 | 10 | 20;
 export type QuranProgressFilter = 'all' | 'incomplete' | 'complete';
 
+export interface RecentQuranRead {
+  day: string;
+  ayahKey: string;
+}
+
 export function mergeQuranReadAyahs(readAyahs: readonly string[] | undefined, readingDays: QuranReadingDays, ayahKey?: string): string[] {
   const keys = new Set(readAyahs ?? []);
   for (const dailyKeys of Object.values(readingDays)) {
@@ -98,6 +103,22 @@ export function recentQuranDayKeys(days: number, now = new Date()): string[] {
     date.setDate(date.getDate() - index);
     return dayKey(date);
   });
+}
+
+export function recentQuranReads(readingDays: QuranReadingDays, limit = 10): RecentQuranRead[] {
+  const boundedLimit = Math.max(0, Math.floor(limit));
+  if (!boundedLimit) return [];
+
+  const reads: RecentQuranRead[] = [];
+  const days = Object.keys(readingDays).sort((left, right) => right.localeCompare(left));
+  for (const day of days) {
+    const ayahKeys = readingDays[day] ?? [];
+    for (let index = ayahKeys.length - 1; index >= 0; index -= 1) {
+      reads.push({ day, ayahKey: ayahKeys[index] });
+      if (reads.length === boundedLimit) return reads;
+    }
+  }
+  return reads;
 }
 
 export function recordAyahRead(readingDays: QuranReadingDays, ayahKey: string, date = new Date(), keepDays = 90): QuranReadingDays {
