@@ -22,8 +22,15 @@ export function QiblaCard({ location }: { location: PrayerLocation }) {
     void Location.watchHeadingAsync((value) => {
       if (!mounted) return;
       const bestHeading = value.trueHeading >= 0 ? value.trueHeading : value.magHeading;
+      if (!Number.isFinite(bestHeading)) {
+        setError(true);
+        return;
+      }
       setHeading(bestHeading);
-    }, () => mounted && setError(true)).then((value) => { subscription = value; }).catch(() => setError(true));
+    }, () => mounted && setError(true)).then((value) => {
+      if (mounted) subscription = value;
+      else value.remove();
+    }).catch(() => mounted && setError(true));
     return () => { mounted = false; subscription?.remove(); };
   }, [live]);
 

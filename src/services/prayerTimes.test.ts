@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { compassTurn, formatPrayerCountdown, nextPrayer, normalizePrayerNotificationSettings, prayerDay, prayerNotificationPlan } from './prayerTimes.ts';
+import { compassTurn, formatPrayerCountdown, isValidPrayerCoordinates, nextPrayer, normalizePrayerNotificationSettings, prayerDay, prayerNotificationPlan } from './prayerTimes.ts';
 
 const ISTANBUL = { latitude: 41.0082, longitude: 28.9784 };
 
@@ -16,6 +16,14 @@ test('keeps Istanbul qibla bearing in the expected south-east range', () => {
   assert.ok(qibla > 151 && qibla < 152);
 });
 
+test('rejects invalid prayer coordinates and dates at the calculation boundary', () => {
+  assert.equal(isValidPrayerCoordinates(41, 29), true);
+  assert.equal(isValidPrayerCoordinates(91, 29), false);
+  assert.equal(isValidPrayerCoordinates(41, Number.NaN), false);
+  assert.throws(() => prayerDay(91, 29), /Geçerli konum/);
+  assert.throws(() => prayerDay(41, 29, new Date(Number.NaN)), /Geçerli konum/);
+});
+
 test('rolls next prayer to tomorrow fajr after isha', () => {
   const late = new Date(2026, 7, 7, 23, 59);
   const next = nextPrayer(ISTANBUL.latitude, ISTANBUL.longitude, late);
@@ -26,6 +34,7 @@ test('rolls next prayer to tomorrow fajr after isha', () => {
 test('turns qibla bearing relative to the live device heading', () => {
   assert.equal(compassTurn(150, 120), 30);
   assert.equal(compassTurn(10, 350), 20);
+  assert.equal(compassTurn(150, Number.NaN), 0);
 });
 
 test('formats a compact countdown to the next prayer', () => {
@@ -42,6 +51,12 @@ test('plans only the five prayer notifications and stays below iOS pending limit
   assert.ok(plan.every((item) => !item.identifier.includes('sunrise')));
   assert.ok(plan.length < 64);
   assert.ok(plan.every((item) => item.time > from));
+});
+
+test('bounds notification planning to the rolling ten-day window', () => {
+  const from = new Date(2026, 7, 7, 0, 1);
+  assert.equal(prayerNotificationPlan(ISTANBUL.latitude, ISTANBUL.longitude, from, 100).length, 50);
+  assert.deepEqual(prayerNotificationPlan(ISTANBUL.latitude, ISTANBUL.longitude, from, Number.POSITIVE_INFINITY), []);
 });
 
 test('filters notification plan to selected prayers', () => {
