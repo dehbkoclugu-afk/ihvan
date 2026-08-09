@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Share, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { useTheme } from '@/hooks/useTheme';
 import { useDhikrStore } from '@/state/useDhikrStore';
@@ -17,6 +17,7 @@ import { quranReadingCoverage, quranReadingStreak } from '@/lib/quranHabit';
 import { buildUserDataExport } from '@/lib/userData';
 import { normalizeUserName } from '@/lib/userProfile';
 import { openSubscriptionManagement } from '@/services/purchases';
+import { shareUserDataExport } from '@/services/userDataExport';
 import { activeStreakCount } from '@/lib/dates';
 import type { QuranTextSize } from '@/lib/quranDisplay';
 import { fonts } from '@/theme/typography';
@@ -27,6 +28,7 @@ export default function Profile() {
   const isPlus = useEntitlementStore((s) => s.isPlus);
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
   const [dataMessage, setDataMessage] = useState<string | null>(null);
+  const [exportingData, setExportingData] = useState(false);
   const { count, bestCount, lastTickDay } = useStreakStore();
   const streakCount = activeStreakCount(lastTickDay, count);
   const name = useUserStore((s) => s.name);
@@ -54,6 +56,8 @@ export default function Profile() {
   };
 
   const exportPersonalData = async () => {
+    if (exportingData) return;
+    setExportingData(true);
     setDataMessage(null);
     const user = useUserStore.getState();
     const prayer = usePrayerTrackingStore.getState();
@@ -72,10 +76,12 @@ export default function Profile() {
       prayerSettings: { notificationsEnabled: prayerSettings.notificationsEnabled, reminderMinutesBefore: prayerSettings.reminderMinutesBefore, notificationPrayers: prayerSettings.notificationPrayers },
     });
     try {
-      await Share.share({ title: 'İhvan veri dışa aktarımı', message: JSON.stringify(snapshot, null, 2) });
-      setDataMessage('Dışa aktarma paylaşım menüsüne hazırlandı.');
+      const mode = await shareUserDataExport(snapshot);
+      setDataMessage(mode === 'file' ? 'JSON dosyası paylaşım menüsüne hazırlandı.' : 'Dışa aktarma paylaşım menüsüne hazırlandı.');
     } catch {
       setDataMessage('Dışa aktarma açılamadı. Lütfen tekrar dene.');
+    } finally {
+      setExportingData(false);
     }
   };
 
@@ -95,7 +101,7 @@ export default function Profile() {
     <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>{quranSizes.map((option) => <Pressable key={option.id} accessibilityRole="radio" accessibilityState={{ selected: quranTextSize === option.id }} onPress={() => setQuranTextSize(option.id)} style={{ flex: 1, paddingVertical: 11, borderRadius: radius.pill, alignItems: 'center', backgroundColor: quranTextSize === option.id ? t.gold : t.surface }}><Text style={{ color: quranTextSize === option.id ? t.onGold : t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{option.label}</Text></Pressable>)}</View>
     <Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 18, marginTop: spacing.xxl }}>Veriler</Text>
     <View style={{ marginTop: spacing.md, backgroundColor: t.surface, borderRadius: radius.inner, overflow: 'hidden' }}>
-      <Pressable accessibilityRole="button" onPress={() => void exportPersonalData()} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg, opacity: pressed ? 0.7 : 1 })}><Ionicons name="share-outline" size={20} color={t.gold} /><View style={{ flex: 1 }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 14 }}>Verilerimi dışa aktar</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: 2 }}>Kişisel ilerleme ve notları JSON olarak paylaş</Text></View><Ionicons name="chevron-forward" size={18} color={t.inkFaint} /></Pressable>
+      <Pressable accessibilityRole="button" accessibilityState={{ disabled: exportingData }} disabled={exportingData} onPress={() => void exportPersonalData()} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg, opacity: exportingData ? 0.5 : pressed ? 0.7 : 1 })}><Ionicons name="share-outline" size={20} color={t.gold} /><View style={{ flex: 1 }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 14 }}>{exportingData ? 'JSON hazırlanıyor…' : 'Verilerimi dışa aktar'}</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: 2 }}>Kişisel ilerleme ve notları JSON dosyası olarak paylaş</Text></View><Ionicons name="chevron-forward" size={18} color={t.inkFaint} /></Pressable>
       <View style={{ height: 1, backgroundColor: t.border, marginLeft: spacing.lg }} />
       <Pressable accessibilityRole="button" onPress={() => router.push('/data-and-privacy')} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.lg, opacity: pressed ? 0.7 : 1 })}><Ionicons name="shield-checkmark-outline" size={20} color={t.gold} /><View style={{ flex: 1 }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 14 }}>Veriler ve kaynaklar</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: 2 }}>İzinler, veri saklama ve Kur’an kaynağı</Text></View><Ionicons name="chevron-forward" size={18} color={t.inkFaint} /></Pressable>
     </View>

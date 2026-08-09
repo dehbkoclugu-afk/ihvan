@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { buildUserDataExport } from './userData.ts';
+import { buildUserDataExport, serializeUserDataExport, userDataExportFileName } from './userData.ts';
 
 test('buildUserDataExport exports personal progress without bundled Quran text', () => {
   const result = buildUserDataExport({
@@ -26,4 +26,7 @@ test('buildUserDataExport exports personal progress without bundled Quran text',
   assert.deepEqual(result.dhikr.history, { '2026-08-08': 12 });
   assert.equal('quranText' in result, false);
   assert.equal(JSON.stringify(result).includes('arabicText'), false);
+  assert.equal(userDataExportFileName(new Date('2026-08-08T10:11:12.345Z')), 'ihvan-verilerim-2026-08-08T10-11-12-345Z.json');
+  assert.equal(userDataExportFileName(new Date(Number.NaN)), 'ihvan-verilerim-1970-01-01T00-00-00-000Z.json');
+  assert.equal(serializeUserDataExport(result), JSON.stringify(result, null, 2));
 });

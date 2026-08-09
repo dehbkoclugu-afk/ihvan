@@ -28,6 +28,15 @@ export interface UserDataExportInput {
   };
 }
 
+export function userDataExportFileName(exportedAt = new Date()): string {
+  const timestamp = Number.isFinite(exportedAt.getTime()) ? exportedAt.toISOString() : new Date(0).toISOString();
+  return `ihvan-verilerim-${timestamp.replace(/[:.]/g, '-')}.json`;
+}
+
+export function serializeUserDataExport(snapshot: ReturnType<typeof buildUserDataExport>): string {
+  return JSON.stringify(snapshot, null, 2);
+}
+
 export function buildUserDataExport(input: UserDataExportInput, exportedAt = new Date()) {
   return {
     format: 'ihvan-user-data',
