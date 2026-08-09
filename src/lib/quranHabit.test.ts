@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mergeQuranReadAyahs, normalizeQuranAyahKeys, normalizeQuranReadingDays, pruneQuranReadingDays, quranCompletedSectionCount, quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys, recentQuranReads, recordAyahRead, retainQuranReadingState } from './quranHabit.ts';
+import { mergeQuranReadAyahs, normalizeQuranAyahKey, normalizeQuranAyahKeys, normalizeQuranReadingDays, normalizeQuranReadingGoal, normalizeQuranReadingPosition, pruneQuranReadingDays, quranCompletedSectionCount, quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys, recentQuranReads, recordAyahRead, retainQuranReadingState } from './quranHabit.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -37,6 +37,25 @@ test('normalizes permanent Quran coverage to canonical valid ayah keys', () => {
     [7, 3],
   ), ['1:1', '2:3']);
   assert.deepEqual(normalizeQuranAyahKeys('1:1', [7]), []);
+});
+
+test('validates Quran reader coordinates before state mutations', () => {
+  assert.equal(normalizeQuranAyahKey(2, 3, [7, 3]), '2:3');
+  assert.equal(normalizeQuranAyahKey(2, 4, [7, 3]), null);
+  assert.equal(normalizeQuranAyahKey(1.5, 1, [7]), null);
+});
+
+test('normalizes persisted Quran bookmarks, position and reading goal', () => {
+  assert.deepEqual(normalizeQuranAyahKeys(['2:3', '2:3', '2:4', 'bad'], [7, 3]), ['2:3']);
+  assert.deepEqual(normalizeQuranReadingPosition({
+    surah: 2,
+    ayah: 3,
+    updatedAt: '2026-08-09T03:00:00.000Z',
+  }, [7, 3]), { surah: 2, ayah: 3, updatedAt: '2026-08-09T03:00:00.000Z' });
+  assert.equal(normalizeQuranReadingPosition({ surah: 2, ayah: 4, updatedAt: '2026-08-09T03:00:00.000Z' }, [7, 3]), null);
+  assert.equal(normalizeQuranReadingPosition({ surah: 1, ayah: 1, updatedAt: 'bad' }, [7]), null);
+  assert.equal(normalizeQuranReadingGoal(20), 20);
+  assert.equal(normalizeQuranReadingGoal(99), 5);
 });
 
 test('normalizes malformed daily Quran reading buckets without inflating progress', () => {
