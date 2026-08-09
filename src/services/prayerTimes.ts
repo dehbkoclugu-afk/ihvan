@@ -26,6 +26,32 @@ export interface PrayerNotificationPlanItem {
 
 export type PrayerReminderOffset = 0 | 5 | 10 | 15 | 30;
 
+export interface PrayerNotificationSettings {
+  notificationsEnabled: boolean;
+  reminderMinutesBefore: PrayerReminderOffset;
+  notificationPrayers: PrayerNotificationKey[];
+}
+
+const reminderOffsets: readonly PrayerReminderOffset[] = [0, 5, 10, 15, 30];
+
+export function normalizePrayerNotificationSettings(value: unknown): PrayerNotificationSettings {
+  const candidate = value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+  const selected = Array.isArray(candidate.notificationPrayers)
+    ? new Set(candidate.notificationPrayers)
+    : new Set(DEFAULT_PRAYER_NOTIFICATION_KEYS);
+  const notificationPrayers = DEFAULT_PRAYER_NOTIFICATION_KEYS.filter((key) => selected.has(key));
+  const reminderMinutesBefore = reminderOffsets.includes(candidate.reminderMinutesBefore as PrayerReminderOffset)
+    ? candidate.reminderMinutesBefore as PrayerReminderOffset
+    : 0;
+  return {
+    notificationsEnabled: candidate.notificationsEnabled === true && notificationPrayers.length > 0,
+    reminderMinutesBefore,
+    notificationPrayers,
+  };
+}
+
 const labels: Record<PrayerKey, string> = {
   fajr: 'İmsak',
   sunrise: 'Güneş',

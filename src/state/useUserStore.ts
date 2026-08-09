@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { ThemeName } from '@/theme/tokens';
 import type { QuranTextSize } from '@/lib/quranDisplay';
+import { normalizeUserPreferences } from '@/lib/userProfile';
 
 interface UserState {
   onboarded: boolean;
@@ -27,6 +28,14 @@ export const useUserStore = create<UserState>()(
       setThemePreference: (themePreference) => set({ themePreference }),
       setQuranTextSize: (quranTextSize) => set({ quranTextSize }),
     }),
-    { name: 'ihvan-user', storage: createJSONStorage(() => AsyncStorage) },
+    {
+      name: 'ihvan-user',
+      storage: createJSONStorage(() => AsyncStorage),
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...persistedState as Partial<UserState>,
+        ...normalizeUserPreferences(persistedState),
+      }),
+    },
   ),
 );

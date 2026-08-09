@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { normalizePersistedEntitlement } from '@/services/purchases.logic';
 
 interface EntitlementState {
   /** true when the `plus` entitlement is active (RevenueCat) or dev override */
@@ -28,7 +29,7 @@ export const useEntitlementStore = create<EntitlementState>()(
       merge: (persistedState, currentState) => ({
         ...currentState,
         ...(persistedState as Partial<EntitlementState>),
-        isPlus: false,
+        ...normalizePersistedEntitlement(persistedState),
       }),
     },
   ),

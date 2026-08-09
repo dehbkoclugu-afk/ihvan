@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   classifyPurchaseError,
   hasActiveEntitlement,
+  normalizePersistedEntitlement,
   planIdForPackage,
 } from './purchases.logic.ts';
 
@@ -36,4 +37,15 @@ test('recognizes the configured Ihvan Plus entitlement', () => {
   const active = { 'Lumen Pro': { identifier: 'Lumen Pro' } };
   assert.equal(hasActiveEntitlement(active, ['plus', 'Lumen Pro']), true);
   assert.equal(hasActiveEntitlement(active, ['plus']), false);
+});
+
+test('never restores Plus entitlement from persisted storage', () => {
+  assert.deepEqual(normalizePersistedEntitlement({ isPlus: true, sawDiscountOffer: true }), {
+    isPlus: false,
+    sawDiscountOffer: true,
+  });
+  assert.deepEqual(normalizePersistedEntitlement({ sawDiscountOffer: 'true' }), {
+    isPlus: false,
+    sawDiscountOffer: false,
+  });
 });
