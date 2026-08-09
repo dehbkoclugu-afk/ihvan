@@ -1,0 +1,113 @@
+name: EAS Build and Submit
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Platform
+        required: true
+        default: android
+        type: choice
+        options: [android, ios, all]
+      profile:
+        description: eas.json build profile
+        required: true
+        default: preview
+        type: choice
+        options: [development, preview, production]
+      submit:
+        description: Submit the latest completed build after building
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_PROJECT_ID: ${{ secrets.EXPO_PROJECT_ID }}
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+      EXPO_PUBLIC_REVENUECAT_IOS_KEY: ${{ secrets.EXPO_PUBLIC_REVENUECAT_IOS_KEY }}
+      EXPO_PUBLIC_REVENUECAT_ANDROID_KEY: ${{ secrets.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY }}
+      EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID: ihvan_plus
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate release inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$EXPO_TOKEN" || { echo "EXPO_TOKEN is missing"; exit 1; }
+          [[ "$EXPO_PROJECT_ID" =~ ^[0-9a-fA-F-]{36}$ ]] || { echo "EXPO_PROJECT_ID is missing or invalid"; exit 1; }
+          if [[ "${{ inputs.profile }}" == "production" ]]; then
+            if [[ "${{ inputs.platform }}" == "android" || "${{ inputs.platform }}" == "all" ]]; then
+              test -n "$EXPO_PUBLIC_REVENUECAT_ANDROID_KEY" || { echo "EXPO_PUBLIC_REVENUECAT_ANDROID_KEY is missing"; exit 1; }
+              [[ "$EXPO_PUBLIC_REVENUECAT_ANDROID_KEY" == goog_* ]] || { echo "RevenueCat Android key must start with goog_"; exit 1; }
+            fi
+            if [[ "${{ inputs.platform }}" == "ios" || "${{ inputs.platform }}" == "all" ]]; then
+              test -n "$EXPO_PUBLIC_REVENUECAT_IOS_KEY" || { echo "EXPO_PUBLIC_REVENUECAT_IOS_KEY is missing"; exit 1; }
+              [[ "$EXPO_PUBLIC_REVENUECAT_IOS_KEY" == appl_* ]] || { echo "RevenueCat iOS key must start with appl_"; exit 1; }
+            fi
+          fi
+          if [[ "${{ inputs.submit }}" == "true" ]]; then
+            [[ "${{ inputs.profile }}" == "production" ]] || { echo "Submit requires the production profile"; exit 1; }
+            if [[ "${{ inputs.platform }}" == "android" || "${{ inputs.platform }}" == "all" ]]; then
+              test -n "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" || { echo "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON is missing"; exit 1; }
+              printf '%s' "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" > play-service-account.json
+              jq -e . play-service-account.json > /dev/null
+              chmod 600 play-service-account.json
+            fi
+          fi
+
+      - name: Link Expo project for this build
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile, writeFile } from 'node:fs/promises';
+          const projectId = process.env.EXPO_PROJECT_ID?.trim();
+          if (!projectId || !/^[0-9a-fA-F-]{36}$/.test(projectId)) throw new Error('Invalid EXPO_PROJECT_ID');
+          const app = JSON.parse(await readFile('app.json', 'utf8'));
+          app.expo.extra = { ...(app.expo.extra ?? {}), eas: { ...(app.expo.extra?.eas ?? {}), projectId } };
+          await writeFile('app.json', `${JSON.stringify(app, null, 2)}\n`);
+          NODE
+          npx expo config --type public > /dev/null
+
+      - name: EAS build
+        run: |
+          npx eas-cli build \
+            --platform ${{ inputs.platform }} \
+            --profile ${{ inputs.profile }} \
+            --non-interactive \
+            --wait
+
+      - name: Report recent EAS builds
+        if: always()
+        run: npx eas-cli build:list --platform ${{ inputs.platform }} --limit 3 --non-interactive || true
+
+      - name: Submit Android build
+        if: ${{ inputs.submit && (inputs.platform == 'android' || inputs.platform == 'all') }}
+        run: npx eas-cli submit --platform android --profile production --latest --non-interactive
+
+      - name: Submit iOS build
+        if: ${{ inputs.submit && (inputs.platform == 'ios' || inputs.platform == 'all') }}
+        run: npx eas-cli submit --platform ios --profile production --latest --non-interactive
+
+      - name: Remove temporary Play credential
+        if: always()
+        run: rm -f play-service-account.json
