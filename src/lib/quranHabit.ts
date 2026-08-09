@@ -105,6 +105,25 @@ export function recentQuranDayKeys(days: number, now = new Date()): string[] {
   });
 }
 
+export function pruneQuranReadingDays(readingDays: QuranReadingDays, keepDays = 90, now = new Date()): QuranReadingDays {
+  const keep = new Set(recentQuranDayKeys(keepDays, now));
+  return Object.fromEntries(Object.entries(readingDays).filter(([key]) => keep.has(key)));
+}
+
+export function retainQuranReadingState(
+  readAyahs: readonly string[] | undefined,
+  readingDays: QuranReadingDays,
+  keepDays = 90,
+  now = new Date(),
+): { readAyahs: string[]; readingDays: QuranReadingDays } {
+  return {
+    // Reading history is temporary, but anything it proves was read must remain
+    // in permanent coverage before an old history bucket is discarded.
+    readAyahs: mergeQuranReadAyahs(readAyahs, readingDays),
+    readingDays: pruneQuranReadingDays(readingDays, keepDays, now),
+  };
+}
+
 export function recentQuranReads(readingDays: QuranReadingDays, limit = 10): RecentQuranRead[] {
   const boundedLimit = Math.max(0, Math.floor(limit));
   if (!boundedLimit) return [];
@@ -125,8 +144,7 @@ export function recordAyahRead(readingDays: QuranReadingDays, ayahKey: string, d
   const today = dayKey(date);
   const current = readingDays[today] ?? [];
   const next = current.includes(ayahKey) ? current : [...current, ayahKey];
-  const keep = new Set(recentQuranDayKeys(keepDays, date));
-  return Object.fromEntries(Object.entries({ ...readingDays, [today]: next }).filter(([key]) => keep.has(key)));
+  return pruneQuranReadingDays({ ...readingDays, [today]: next }, keepDays, date);
 }
 
 export function quranReadCount(readingDays: QuranReadingDays, date = new Date()): number {

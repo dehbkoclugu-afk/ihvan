@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { dayKey } from '@/lib/dates';
-import { dhikrHistoryWithLegacy, incrementDailyDhikr, pruneDhikrHistory, type DhikrHistory } from '@/lib/dhikr';
+import { dhikrHistoryWithLegacy, incrementDailyDhikr, pruneDhikrHistory, retainDhikrState, type DhikrHistory } from '@/lib/dhikr';
 
 interface DhikrState {
   day: string | null;
@@ -10,6 +10,7 @@ interface DhikrState {
   history: DhikrHistory;
   increment: () => void;
   reset: () => void;
+  enforceRetention: () => void;
   clearHistory: () => void;
 }
 
@@ -29,8 +30,18 @@ export const useDhikrStore = create<DhikrState>()(
         const history = dhikrHistoryWithLegacy(state.history ?? {}, state.day, state.count);
         return { day: today, count: 0, history: pruneDhikrHistory({ ...history, [today]: 0 }) };
       }),
+      enforceRetention: () => set((state) => retainDhikrState(state.day, state.count, state.history ?? {})),
       clearHistory: () => set({ day: null, count: 0, history: {} }),
     }),
-    { name: 'ihvan-dhikr', storage: createJSONStorage(() => AsyncStorage) },
+    {
+      name: 'ihvan-dhikr',
+      storage: createJSONStorage(() => AsyncStorage),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<DhikrState>;
+        const retained = retainDhikrState(persisted.day ?? null, persisted.count ?? 0, persisted.history ?? {});
+        return { ...currentState, ...persisted, ...retained };
+      },
+      onRehydrateStorage: () => (state) => state?.enforceRetention(),
+    },
   ),
 );

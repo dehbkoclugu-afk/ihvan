@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mergeQuranReadAyahs, quranCompletedSectionCount, quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys, recentQuranReads, recordAyahRead } from './quranHabit.ts';
+import { mergeQuranReadAyahs, pruneQuranReadingDays, quranCompletedSectionCount, quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys, recentQuranReads, recordAyahRead, retainQuranReadingState } from './quranHabit.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -15,6 +15,20 @@ test('records unique ayahs for the local day', () => {
 test('prunes Quran reading records outside retention', () => {
   const result = recordAyahRead({ '2026-08-07': ['1:1'], '2026-08-06': ['1:2'] }, '1:3', now, 2);
   assert.deepEqual(result, { '2026-08-07': ['1:1'], '2026-08-08': ['1:3'] });
+  assert.deepEqual(pruneQuranReadingDays({ '2026-08-08': ['1:1'], '2026-08-07': ['1:2'], '2026-08-06': ['1:3'] }, 2, now), {
+    '2026-08-08': ['1:1'],
+    '2026-08-07': ['1:2'],
+  });
+});
+
+test('moves expired Quran history into permanent coverage before pruning it', () => {
+  assert.deepEqual(retainQuranReadingState(['1:1'], {
+    '2026-08-08': ['1:2'],
+    '2026-08-06': ['2:1'],
+  }, 2, now), {
+    readAyahs: ['1:1', '1:2', '2:1'],
+    readingDays: { '2026-08-08': ['1:2'] },
+  });
 });
 
 test('caps daily Quran goal progress at one hundred percent', () => {
