@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { dhikrCountForDay, dhikrHistoryWithLegacy, dhikrSummary, dhikrTargetStreak, incrementDailyDhikr, isDailyDhikrTargetReached, pruneDhikrHistory } from './dhikr.ts';
+import { dhikrCountForDay, dhikrHistoryWithLegacy, dhikrSummary, dhikrTargetStreak, incrementDailyDhikr, isDailyDhikrTargetReached, pruneDhikrHistory, retainDhikrState } from './dhikr.ts';
 
 const today = new Date(2026, 7, 8, 12);
 
@@ -41,4 +41,17 @@ test('requires the full target for current and best dhikr streaks', () => {
 
 test('prunes dhikr history outside retention', () => {
   assert.deepEqual(pruneDhikrHistory({ '2026-08-08': 33, '2026-08-07': 1, '2026-08-06': 9 }, 2, today), { '2026-08-08': 33, '2026-08-07': 1 });
+});
+
+test('retains only in-window dhikr state during hydration', () => {
+  assert.deepEqual(retainDhikrState('2026-08-07', 17, { '2026-08-06': 33 }, 2, today), {
+    day: '2026-08-07',
+    count: 17,
+    history: { '2026-08-07': 17 },
+  });
+  assert.deepEqual(retainDhikrState('2026-08-06', 33, { '2026-08-06': 33 }, 2, today), {
+    day: null,
+    count: 0,
+    history: {},
+  });
 });

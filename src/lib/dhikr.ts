@@ -28,6 +28,24 @@ export function pruneDhikrHistory(history: DhikrHistory, keepDays = 90, now = ne
   return Object.fromEntries(Object.entries(history).filter(([key]) => keep.has(key)));
 }
 
+export function retainDhikrState(
+  storedDay: string | null,
+  count: number,
+  history: DhikrHistory = {},
+  keepDays = 90,
+  now = new Date(),
+): { day: string | null; count: number; history: DhikrHistory } {
+  const keep = new Set(recentDhikrDayKeys(keepDays, now));
+  const retainedDay = storedDay && keep.has(storedDay) ? storedDay : null;
+  const retainedCount = retainedDay ? Math.max(0, count) : 0;
+  const withLegacy = dhikrHistoryWithLegacy(history, retainedDay, retainedCount);
+  return {
+    day: retainedDay,
+    count: retainedCount,
+    history: pruneDhikrHistory(withLegacy, keepDays, now),
+  };
+}
+
 export function dhikrSummary(history: DhikrHistory, days: number, now = new Date()) {
   const counts = recentDhikrDayKeys(days, now).map((key) => Math.max(0, history[key] ?? 0));
   return {
