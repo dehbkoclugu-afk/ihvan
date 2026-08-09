@@ -21,6 +21,7 @@ test('release config has no placeholder credentials or background location', () 
   assert.equal(locationPlugin[1].isIosBackgroundLocationEnabled, false);
   assert.equal(locationPlugin[1].isAndroidBackgroundLocationEnabled, false);
   assert.equal(locationPlugin[1].isAndroidForegroundServiceEnabled, false);
+  assert.ok((appConfig.expo.plugins as unknown[]).includes('./plugins/with-android-package-fix.js'));
 });
 
 test('release branding assets referenced by Expo exist', () => {

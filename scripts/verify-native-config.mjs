@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const androidManifest = readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8');
+const androidMainActivity = readFileSync('android/app/src/main/java/com/ihvan/quran/MainActivity.kt', 'utf8');
+const androidMainApplication = readFileSync('android/app/src/main/java/com/ihvan/quran/MainApplication.kt', 'utf8');
 const iosInfoPlist = readFileSync('ios/hvan/Info.plist', 'utf8');
 
 for (const permission of [
@@ -18,6 +20,9 @@ for (const forbiddenPermission of [
 ]) {
   assert.equal(androidManifest.includes(forbiddenPermission), false, `Android manifest must not include ${forbiddenPermission}`);
 }
+
+assert.match(androidMainActivity, /^package com\.ihvan\.quran$/m, 'Android MainActivity package must match the Gradle namespace');
+assert.match(androidMainApplication, /^package com\.ihvan\.quran$/m, 'Android MainApplication package must match the Gradle namespace');
 
 assert.ok(iosInfoPlist.includes('NSLocationWhenInUseUsageDescription'), 'iOS must explain foreground location usage');
 assert.ok(iosInfoPlist.includes('İhvan, bulunduğun yere göre namaz vakitlerini ve kıble yönünü hesaplamak için konumunu kullanır.'), 'iOS must use the reviewed foreground-location explanation');
