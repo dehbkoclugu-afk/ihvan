@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mergeQuranReadAyahs, pruneQuranReadingDays, quranCompletedSectionCount, quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys, recentQuranReads, recordAyahRead, retainQuranReadingState } from './quranHabit.ts';
+import { mergeQuranReadAyahs, normalizeQuranAyahKeys, normalizeQuranReadingDays, pruneQuranReadingDays, quranCompletedSectionCount, quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranReadingSummary, quranSectionReadCounts, quranSurahReadCounts, recentQuranDayKeys, recentQuranReads, recordAyahRead, retainQuranReadingState } from './quranHabit.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -27,6 +27,41 @@ test('moves expired Quran history into permanent coverage before pruning it', ()
     '2026-08-06': ['2:1'],
   }, 2, now), {
     readAyahs: ['1:1', '1:2', '2:1'],
+    readingDays: { '2026-08-08': ['1:2'] },
+  });
+});
+
+test('normalizes permanent Quran coverage to canonical valid ayah keys', () => {
+  assert.deepEqual(normalizeQuranAyahKeys(
+    ['01:01', '1:1', '1:8', '2:3', '2:3', '0:1', 'bad', null],
+    [7, 3],
+  ), ['1:1', '2:3']);
+  assert.deepEqual(normalizeQuranAyahKeys('1:1', [7]), []);
+});
+
+test('normalizes malformed daily Quran reading buckets without inflating progress', () => {
+  assert.deepEqual(normalizeQuranReadingDays({
+    '2026-08-08': ['1:1', '1:1', '1:8', 3],
+    '2026-08-07': '2:1',
+  }, [7]), {
+    '2026-08-08': ['1:1'],
+    '2026-08-07': [],
+  });
+  assert.deepEqual(normalizeQuranReadingDays(['1:1'], [7]), {});
+});
+
+test('retains only valid Quran identifiers from corrupted persisted state', () => {
+  assert.deepEqual(retainQuranReadingState(
+    ['1:1', '1:8', '2:1', null],
+    {
+      '2026-08-08': ['1:2', '2:4', 'bad', '1:2'],
+      '2026-08-06': ['2:3'],
+    },
+    2,
+    now,
+    [7, 3],
+  ), {
+    readAyahs: ['1:1', '2:1', '1:2', '2:3'],
     readingDays: { '2026-08-08': ['1:2'] },
   });
 });

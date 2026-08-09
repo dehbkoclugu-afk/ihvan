@@ -9,12 +9,54 @@ export interface RecentQuranRead {
   ayahKey: string;
 }
 
-export function mergeQuranReadAyahs(readAyahs: readonly string[] | undefined, readingDays: QuranReadingDays, ayahKey?: string): string[] {
-  const keys = new Set(readAyahs ?? []);
-  for (const dailyKeys of Object.values(readingDays)) {
-    for (const key of dailyKeys) keys.add(key);
+export function normalizeQuranAyahKeys(keys: unknown, surahAyahCounts: readonly number[]): string[] {
+  if (!Array.isArray(keys)) return [];
+
+  const normalized = new Set<string>();
+  for (const key of keys) {
+    if (typeof key !== 'string') continue;
+    const match = key.match(/^(\d+):(\d+)$/);
+    if (!match) continue;
+    const surah = Number(match[1]);
+    const ayah = Number(match[2]);
+    const ayahCount = surahAyahCounts[surah - 1];
+    if (!ayahCount || ayah < 1 || ayah > ayahCount) continue;
+    normalized.add(`${surah}:${ayah}`);
   }
-  if (ayahKey) keys.add(ayahKey);
+  return [...normalized];
+}
+
+export function normalizeQuranReadingDays(readingDays: unknown, surahAyahCounts: readonly number[]): QuranReadingDays {
+  if (!readingDays || typeof readingDays !== 'object' || Array.isArray(readingDays)) return {};
+
+  return Object.fromEntries(
+    Object.entries(readingDays).map(([day, keys]) => [day, normalizeQuranAyahKeys(keys, surahAyahCounts)]),
+  );
+}
+
+export function mergeQuranReadAyahs(
+  readAyahs: unknown,
+  readingDays: unknown,
+  ayahKey?: string,
+  surahAyahCounts?: readonly number[],
+): string[] {
+  const permanentKeys = surahAyahCounts
+    ? normalizeQuranAyahKeys(readAyahs, surahAyahCounts)
+    : Array.isArray(readAyahs) ? readAyahs.filter((key): key is string => typeof key === 'string') : [];
+  const normalizedDays = surahAyahCounts
+    ? normalizeQuranReadingDays(readingDays, surahAyahCounts)
+    : readingDays && typeof readingDays === 'object' && !Array.isArray(readingDays) ? readingDays as Record<string, unknown> : {};
+  const keys = new Set(permanentKeys);
+  for (const dailyKeys of Object.values(normalizedDays)) {
+    if (!Array.isArray(dailyKeys)) continue;
+    for (const key of dailyKeys) {
+      if (typeof key === 'string') keys.add(key);
+    }
+  }
+  if (ayahKey) {
+    const normalizedKey = surahAyahCounts ? normalizeQuranAyahKeys([ayahKey], surahAyahCounts)[0] : ayahKey;
+    if (normalizedKey) keys.add(normalizedKey);
+  }
   return [...keys];
 }
 
@@ -111,16 +153,20 @@ export function pruneQuranReadingDays(readingDays: QuranReadingDays, keepDays = 
 }
 
 export function retainQuranReadingState(
-  readAyahs: readonly string[] | undefined,
-  readingDays: QuranReadingDays,
+  readAyahs: unknown,
+  readingDays: unknown,
   keepDays = 90,
   now = new Date(),
+  surahAyahCounts?: readonly number[],
 ): { readAyahs: string[]; readingDays: QuranReadingDays } {
+  const normalizedDays = surahAyahCounts
+    ? normalizeQuranReadingDays(readingDays, surahAyahCounts)
+    : readingDays && typeof readingDays === 'object' && !Array.isArray(readingDays) ? readingDays as QuranReadingDays : {};
   return {
     // Reading history is temporary, but anything it proves was read must remain
     // in permanent coverage before an old history bucket is discarded.
-    readAyahs: mergeQuranReadAyahs(readAyahs, readingDays),
-    readingDays: pruneQuranReadingDays(readingDays, keepDays, now),
+    readAyahs: mergeQuranReadAyahs(readAyahs, normalizedDays, undefined, surahAyahCounts),
+    readingDays: pruneQuranReadingDays(normalizedDays, keepDays, now),
   };
 }
 
