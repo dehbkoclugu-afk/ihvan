@@ -1,0 +1,212 @@
+name: Android Signed Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: Optional positive Android versionCode; defaults to this workflow run number
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      CI: '1'
+      EXPO_NO_TELEMETRY: '1'
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      ANDROID_VERSION_CODE: ${{ inputs.version_code || github.run_number }}
+      EXPO_PUBLIC_REVENUECAT_ANDROID_KEY: ${{ secrets.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY }}
+      EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID: ihvan_plus
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Validate release inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$ANDROID_KEYSTORE_BASE64" || { echo "ANDROID_KEYSTORE_BASE64 is missing"; exit 1; }
+          test -n "$ANDROID_KEYSTORE_PASSWORD" || { echo "ANDROID_KEYSTORE_PASSWORD is missing"; exit 1; }
+          test -n "$ANDROID_KEY_ALIAS" || { echo "ANDROID_KEY_ALIAS is missing"; exit 1; }
+          test -n "$ANDROID_KEY_PASSWORD" || { echo "ANDROID_KEY_PASSWORD is missing"; exit 1; }
+          test -n "$EXPO_PUBLIC_REVENUECAT_ANDROID_KEY" || { echo "EXPO_PUBLIC_REVENUECAT_ANDROID_KEY is missing"; exit 1; }
+          [[ "$EXPO_PUBLIC_REVENUECAT_ANDROID_KEY" == goog_* ]] || { echo "RevenueCat Android key must start with goog_"; exit 1; }
+          [[ "$ANDROID_VERSION_CODE" =~ ^[1-9][0-9]*$ ]] || { echo "versionCode must be a positive integer"; exit 1; }
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost /usr/local/lib/node_modules
+          df -h /
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate native projects
+        run: npx expo prebuild --no-install --clean
+
+      - name: Verify native privacy config
+        run: node scripts/verify-native-config.mjs
+
+      - name: Restore upload keystore
+        shell: bash
+        run: |
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          test -s android/app/upload-keystore.jks
+
+      - name: Configure release signing and version code
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          path = Path("android/app/build.gradle")
+          text = path.read_text(encoding="utf-8")
+
+          def block_end(source: str, marker: str, start: int = 0) -> int:
+              marker_pos = source.index(marker, start)
+              opening = source.index("{", marker_pos)
+              depth = 0
+              for index in range(opening, len(source)):
+                  if source[index] == "{":
+                      depth += 1
+                  elif source[index] == "}":
+                      depth -= 1
+                      if depth == 0:
+                          return index
+              raise RuntimeError(f"Unclosed Gradle block: {marker}")
+
+          signing_end = block_end(text, "signingConfigs")
+          release_signing = '''
+                  release {
+                      storeFile file("upload-keystore.jks")
+                      storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                      keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+                  }
+          '''
+          text = text[:signing_end] + release_signing + text[signing_end:]
+
+          build_types_start = text.index("buildTypes")
+          release_start = text.index("release", build_types_start)
+          release_end = block_end(text, "release", build_types_start)
+          release_block = text[release_start:release_end]
+          if "signingConfig signingConfigs.debug" not in release_block:
+              raise RuntimeError("Expected Expo debug signing line was not found")
+          release_block = release_block.replace(
+              "signingConfig signingConfigs.debug",
+              "signingConfig signingConfigs.release",
+              1,
+          )
+          text = text[:release_start] + release_block + text[release_end:]
+
+          text, count = re.subn(
+              r"(?m)^(\s*)versionCode\s+\d+\s*$",
+              lambda match: f"{match.group(1)}versionCode {os.environ['ANDROID_VERSION_CODE']}",
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise RuntimeError("Could not set Android versionCode")
+
+          path.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Limit Android architectures
+        run: |
+          sed -i 's/^reactNativeArchitectures=.*/reactNativeArchitectures=arm64-v8a,x86_64/' android/gradle.properties
+          grep reactNativeArchitectures android/gradle.properties
+
+      - name: Build signed AAB and APK
+        run: cd android && ./gradlew bundleRelease assembleRelease --no-daemon
+
+      - name: Verify release signatures
+        shell: bash
+        run: |
+          jarsigner -verify -verbose -certs android/app/build/outputs/bundle/release/app-release.aab
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -type f -name apksigner | sort -V | tail -n 1)"
+          test -n "$APKSIGNER"
+          "$APKSIGNER" verify --verbose android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Upload signed AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: ihvan-signed-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload signed APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ihvan-signed-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Remove restored keystore
+        if: always()
+        run: rm -f android/app/upload-keystore.jks
+
+  smoke:
+    needs: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Download signed APK
+        uses: actions/download-artifact@v4
+        with:
+          name: ihvan-signed-apk
+
+      - name: Configure KVM permissions
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Launch signed APK on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            set -eu
+            adb install app-release.apk
+            adb logcat -c
+            adb shell monkey -p com.ihvan.quran -c android.intent.category.LAUNCHER 1
+            sleep 30
+            adb logcat -d > logcat.txt
+            adb shell pidof com.ihvan.quran
+            ! grep -Eq "FATAL EXCEPTION|Fatal signal|tombstoned" logcat.txt
+
+      - name: Upload signed smoke logcat
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ihvan-signed-logcat
+          path: logcat.txt
+          if-no-files-found: ignore
+          retention-days: 14

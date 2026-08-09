@@ -28,3 +28,42 @@ test('release branding assets referenced by Expo exist', () => {
     assert.equal(existsSync(path), true, `${path} must exist`);
   }
 });
+
+test('release workflows preserve secret and privacy boundaries', () => {
+  const preview = readFileSync('.github/workflows/android-preview.yml', 'utf8');
+  const signed = readFileSync('.github/workflows/android-release.yml', 'utf8');
+  const eas = readFileSync('.github/workflows/eas-release.yml', 'utf8');
+
+  assert.ok(preview.includes('workflow_dispatch:'));
+  assert.ok(preview.includes('node scripts/verify-native-config.mjs'));
+  assert.ok(preview.includes('com.ihvan.quran'));
+  assert.ok(preview.includes('ihvan-preview-apk'));
+  assert.equal(preview.includes('secrets.'), false, 'preview APK must remain secret-free');
+
+  for (const secret of [
+    'ANDROID_KEYSTORE_BASE64',
+    'ANDROID_KEYSTORE_PASSWORD',
+    'ANDROID_KEY_ALIAS',
+    'ANDROID_KEY_PASSWORD',
+    'EXPO_PUBLIC_REVENUECAT_ANDROID_KEY',
+  ]) {
+    assert.ok(signed.includes(`secrets.${secret}`), `signed workflow must read ${secret} from Actions secrets`);
+  }
+  assert.ok(signed.includes('node scripts/verify-native-config.mjs'));
+  assert.ok(signed.includes('jarsigner -verify'));
+  assert.ok(signed.includes('apksigner'));
+  assert.ok(signed.includes('rm -f android/app/upload-keystore.jks'));
+
+  for (const secret of [
+    'EXPO_TOKEN',
+    'EXPO_PROJECT_ID',
+    'GOOGLE_PLAY_SERVICE_ACCOUNT_JSON',
+    'EXPO_PUBLIC_REVENUECAT_IOS_KEY',
+    'EXPO_PUBLIC_REVENUECAT_ANDROID_KEY',
+  ]) {
+    assert.ok(eas.includes(`secrets.${secret}`), `EAS workflow must read ${secret} from Actions secrets`);
+  }
+  assert.ok(eas.includes('--profile ${{ inputs.profile }}'));
+  assert.ok(eas.includes('--non-interactive'));
+  assert.ok(eas.includes('rm -f play-service-account.json'));
+});
