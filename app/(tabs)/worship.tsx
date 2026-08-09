@@ -57,7 +57,13 @@ export default function Worship() {
         setNotificationNeedsSettings(true);
         setNotificationError('Bildirim izni kapalı. İzni cihaz ayarlarından açabilirsin.');
       }
-    }).catch(() => setNotificationError('Vakit bildirimleri yenilenemedi. Daha sonra tekrar deneyebilirsin.'));
+    }).catch(() => {
+      // schedule() rolls a failed batch back, so persisted UI state must also
+      // stop claiming that reminders are active.
+      setNotificationsEnabled(false);
+      setNotificationNeedsSettings(false);
+      setNotificationError('Vakit bildirimleri yenilenemedi. Bildirimler kapatıldı; daha sonra tekrar açabilirsin.');
+    });
   }, [location, notificationsEnabled, reminderMinutesBefore, notificationPrayers, setNotificationsEnabled]);
 
   async function toggleNotifications() {
