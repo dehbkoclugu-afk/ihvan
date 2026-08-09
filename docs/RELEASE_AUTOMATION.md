@@ -10,6 +10,11 @@ yeniden üretir, foreground-only konum ve bildirim privacy guard'ını doğrular
 test/sideload amaçlı APK üretir ve Android 14 emülatöründe açılış smoke testi
 çalıştırır. Artifact adı `ihvan-preview-apk` olur.
 
+Workflow elle çalıştırılabilir. Ayrıca uygulama kaynakları, assetler veya
+release config'i değişen `claude-code` pull request'lerinde otomatik çalışır.
+Aynı branch'e yeni commit gelirse eski preview koşusu iptal edilerek gereksiz
+runner kullanımı önlenir.
+
 Bu APK store yayını için kullanılmaz; Expo şablonunun test imzasını kullanır.
 
 ## Android Signed Release

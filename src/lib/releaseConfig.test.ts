@@ -21,6 +21,7 @@ test('release config has no placeholder credentials or background location', () 
   assert.equal(locationPlugin[1].isIosBackgroundLocationEnabled, false);
   assert.equal(locationPlugin[1].isAndroidBackgroundLocationEnabled, false);
   assert.equal(locationPlugin[1].isAndroidForegroundServiceEnabled, false);
+  assert.ok((appConfig.expo.plugins as unknown[]).includes('./plugins/with-android-package-fix.js'));
 });
 
 test('release branding assets referenced by Expo exist', () => {
@@ -35,6 +36,9 @@ test('release workflows preserve secret and privacy boundaries', () => {
   const eas = readFileSync('.github/workflows/eas-release.yml', 'utf8');
 
   assert.ok(preview.includes('workflow_dispatch:'));
+  assert.ok(preview.includes('pull_request:'));
+  assert.ok(preview.includes('branches: [claude-code]'));
+  assert.ok(preview.includes('cancel-in-progress: true'));
   assert.ok(preview.includes('node scripts/verify-native-config.mjs'));
   assert.ok(preview.includes('com.ihvan.quran'));
   assert.ok(preview.includes('ihvan-preview-apk'));
