@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Location from 'expo-location';
 import { AppState, Linking } from 'react-native';
 
@@ -20,6 +20,7 @@ export function usePrayerLocation() {
   const [canAskAgain, setCanAskAgain] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const permissionRequestInFlight = useRef(false);
 
   const loadLocation = useCallback(async () => {
     setLoading(true);
@@ -42,10 +43,21 @@ export function usePrayerLocation() {
   }, []);
 
   const syncPermission = useCallback(async () => {
-    const result = await Location.getForegroundPermissionsAsync();
-    setPermission(result.status);
-    setCanAskAgain(result.canAskAgain);
-    if (result.status === Location.PermissionStatus.GRANTED) await loadLocation();
+    try {
+      const result = await Location.getForegroundPermissionsAsync();
+      setPermission(result.status);
+      setCanAskAgain(result.canAskAgain);
+      if (result.status === Location.PermissionStatus.GRANTED) {
+        await loadLocation();
+      } else {
+        // Never keep using coordinates after the OS permission is revoked.
+        setLocation(null);
+      }
+    } catch {
+      setLocation(null);
+      setPermission(null);
+      setError('Konum izni durumu okunamadı. Biraz sonra tekrar deneyebilirsin.');
+    }
   }, [loadLocation]);
 
   useEffect(() => {
@@ -65,15 +77,27 @@ export function usePrayerLocation() {
   }, []);
 
   const requestLocation = useCallback(async () => {
+    if (permissionRequestInFlight.current) return;
+    permissionRequestInFlight.current = true;
+    setLoading(true);
     setError(null);
-    const result = await Location.requestForegroundPermissionsAsync();
+    try {
+      const result = await Location.requestForegroundPermissionsAsync();
       setPermission(result.status);
-    setCanAskAgain(result.canAskAgain);
-    if (result.status !== Location.PermissionStatus.GRANTED) {
-      setError(result.canAskAgain ? 'Namaz vakitleri ve kıble için konum izni gerekli.' : 'Konum izni kapalı. İzni cihaz ayarlarından açabilirsin.');
-      return;
+      setCanAskAgain(result.canAskAgain);
+      if (result.status !== Location.PermissionStatus.GRANTED) {
+        setLocation(null);
+        setError(result.canAskAgain ? 'Namaz vakitleri ve kıble için konum izni gerekli.' : 'Konum izni kapalı. İzni cihaz ayarlarından açabilirsin.');
+        return;
+      }
+      await loadLocation();
+    } catch {
+      setLocation(null);
+      setError('Konum izni istenemedi. Biraz sonra tekrar deneyebilirsin.');
+    } finally {
+      permissionRequestInFlight.current = false;
+      setLoading(false);
     }
-    await loadLocation();
   }, [loadLocation]);
 
   return { location, permission, canAskAgain, loading, error, requestLocation, openLocationSettings, refresh: loadLocation };
