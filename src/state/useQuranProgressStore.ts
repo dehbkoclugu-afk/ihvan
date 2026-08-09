@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { QURAN_SURAHS } from '@/data/quran';
 import { mergeQuranReadAyahs, recordAyahRead as recordReadingDay, retainQuranReadingState, type QuranReadingDays, type QuranReadingGoal } from '@/lib/quranHabit';
 
 export interface QuranPosition {
@@ -25,6 +26,7 @@ interface QuranProgressState {
 }
 
 const keyFor = (surah: number, ayah: number) => `${surah}:${ayah}`;
+const surahAyahCounts = QURAN_SURAHS.map((surah) => surah.ayahCount);
 
 export const useQuranProgressStore = create<QuranProgressState>()(
   persist(
@@ -39,7 +41,7 @@ export const useQuranProgressStore = create<QuranProgressState>()(
         const key = keyFor(surah, ayah);
         return {
           readingDays: recordReadingDay(state.readingDays, key, date),
-          readAyahs: mergeQuranReadAyahs(state.readAyahs, state.readingDays, key),
+          readAyahs: mergeQuranReadAyahs(state.readAyahs, state.readingDays, key, surahAyahCounts),
         };
       }),
       markAyahRead: (surah, ayah, date = new Date()) => set((state) => {
@@ -47,7 +49,7 @@ export const useQuranProgressStore = create<QuranProgressState>()(
         return {
           lastRead: { surah, ayah, updatedAt: date.toISOString() },
           readingDays: recordReadingDay(state.readingDays, key, date),
-          readAyahs: mergeQuranReadAyahs(state.readAyahs, state.readingDays, key),
+          readAyahs: mergeQuranReadAyahs(state.readAyahs, state.readingDays, key, surahAyahCounts),
         };
       }),
       setReadingGoal: (readingGoal) => set({ readingGoal }),
@@ -55,7 +57,7 @@ export const useQuranProgressStore = create<QuranProgressState>()(
         const key = keyFor(surah, ayah);
         return { bookmarks: state.bookmarks.includes(key) ? state.bookmarks.filter((item) => item !== key) : [key, ...state.bookmarks] };
       }),
-      enforceRetention: () => set((state) => retainQuranReadingState(state.readAyahs, state.readingDays)),
+      enforceRetention: () => set((state) => retainQuranReadingState(state.readAyahs, state.readingDays, 90, new Date(), surahAyahCounts)),
       clearProgress: () => set({ lastRead: null, bookmarks: [], readingDays: {}, readAyahs: [] }),
     }),
     {
@@ -63,7 +65,7 @@ export const useQuranProgressStore = create<QuranProgressState>()(
       storage: createJSONStorage(() => AsyncStorage),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<QuranProgressState>;
-        const retained = retainQuranReadingState(persisted.readAyahs, persisted.readingDays ?? {});
+        const retained = retainQuranReadingState(persisted.readAyahs, persisted.readingDays, 90, new Date(), surahAyahCounts);
         return { ...currentState, ...persisted, ...retained };
       },
       onRehydrateStorage: () => (state) => state?.enforceRetention(),
