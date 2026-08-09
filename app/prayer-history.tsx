@@ -26,7 +26,7 @@ export default function PrayerHistory() {
   const formatDay = new Intl.DateTimeFormat('tr-TR', { weekday: 'short', day: 'numeric', month: 'short' });
 
   return <Screen>
-    <Pressable accessibilityLabel="Geri" onPress={() => router.back()} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="arrow-back" size={20} color={t.ink} /></Pressable>
+    <Pressable accessibilityRole="button" accessibilityLabel="Geri" onPress={() => router.back()} style={{ width: 42, height: 42, borderRadius: 21, backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="arrow-back" size={20} color={t.ink} /></Pressable>
     <Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 32, marginTop: spacing.xl }}>Namaz takibi</Text>
     <Text style={{ color: t.inkSoft, fontFamily: fonts.sans, lineHeight: 21, marginTop: 6 }}>Kayıtların yalnızca bu cihazda tutulur. Unuttuğun bir günü kutulara dokunarak düzeltebilirsin.</Text>
 
