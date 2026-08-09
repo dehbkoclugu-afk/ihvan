@@ -19,6 +19,17 @@ export const useEntitlementStore = create<EntitlementState>()(
       setPlus: (v) => set({ isPlus: v }),
       setSawDiscountOffer: (v) => set({ sawDiscountOffer: v }),
     }),
-    { name: 'ihvan-entitlement', storage: createJSONStorage(() => AsyncStorage) },
+    {
+      name: 'ihvan-entitlement',
+      storage: createJSONStorage(() => AsyncStorage),
+      // Store-derived entitlement is runtime authority. Never grant Plus from
+      // a value persisted by an earlier app session.
+      partialize: (state) => ({ ...state, isPlus: false }),
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...(persistedState as Partial<EntitlementState>),
+        isPlus: false,
+      }),
+    },
   ),
 );
