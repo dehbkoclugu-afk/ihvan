@@ -7,11 +7,11 @@ import * as Notifications from 'expo-notifications';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { AppState, Platform, Pressable, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useTheme, useThemeName } from '@/hooks/useTheme';
 import { useUserStoreHydrated } from '@/hooks/useUserStoreHydrated';
-import { initPurchases } from '@/services/purchases';
+import { initPurchases, refreshPurchases } from '@/services/purchases';
 import { configurePrayerNotificationHandler } from '@/services/prayerNotifications';
 import { routeForNotificationData } from '@/lib/notificationRouting';
 
@@ -26,7 +26,13 @@ export default function RootLayout() {
   const notificationResponse = Notifications.useLastNotificationResponse();
   const hydrationReady = Platform.OS === 'web' || userStoreHydrated;
 
-  useEffect(() => { initPurchases(); }, []);
+  useEffect(() => {
+    void initPurchases();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void refreshPurchases();
+    });
+    return () => subscription.remove();
+  }, []);
   useEffect(() => { if ((loaded || error) && hydrationReady) SplashScreen.hideAsync().catch(() => {}); }, [hydrationReady, loaded, error]);
   useEffect(() => {
     if (Platform.OS === 'web' || !hydrationReady || (!loaded && !error) || !notificationResponse) return;

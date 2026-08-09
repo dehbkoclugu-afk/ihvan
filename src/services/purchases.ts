@@ -61,7 +61,14 @@ const entitlementIds = Array.from(
 
 let rc: typeof import('react-native-purchases').default | null = null;
 let initPromise: Promise<void> | null = null;
+let customerInfoListenerAttached = false;
 const packages = new Map<PlanId, PurchasesPackage>();
+
+function applyCustomerInfo(info: Awaited<ReturnType<NonNullable<typeof rc>['getCustomerInfo']>>) {
+  useEntitlementStore
+    .getState()
+    .setPlus(hasActiveEntitlement(info.entitlements.active, entitlementIds));
+}
 
 function trialDaysFor(pkg: PurchasesPackage): number | null {
   const intro = pkg.product.introPrice;
@@ -91,15 +98,31 @@ export function initPurchases(): Promise<void> {
       const Purchases = (await import('react-native-purchases')).default;
       Purchases.configure({ apiKey });
       rc = Purchases;
-      const info = await Purchases.getCustomerInfo();
-      useEntitlementStore
-        .getState()
-        .setPlus(hasActiveEntitlement(info.entitlements.active, entitlementIds));
+      if (!customerInfoListenerAttached) {
+        Purchases.addCustomerInfoUpdateListener(applyCustomerInfo);
+        customerInfoListenerAttached = true;
+      }
     } catch {
       rc = null;
+      return;
     }
+    // A transient network/store failure must not discard an otherwise
+    // configured RevenueCat client for the rest of the app session.
+    try {
+      applyCustomerInfo(await rc.getCustomerInfo());
+    } catch {}
   })();
   return initPromise;
+}
+
+export async function refreshPurchases(): Promise<void> {
+  await initPurchases();
+  if (!rc) return;
+  try {
+    applyCustomerInfo(await rc.getCustomerInfo());
+  } catch {
+    // Keep the last verified runtime state and retry on the next app resume.
+  }
 }
 
 export async function loadPlans(): Promise<PurchaseCatalog> {
