@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { dayKey, nextStreak } from '@/lib/dates';
-import { completeRitualStep, isRitualComplete, type RitualStep } from '@/lib/ritual';
+import { completeRitualStep, isRitualComplete, normalizeRitualProgress, type RitualStep } from '@/lib/ritual';
 
 export type { RitualStep } from '@/lib/ritual';
 
@@ -52,6 +52,14 @@ export const useStreakStore = create<StreakState>()(
       },
       clearProgress: () => set({ count: 0, bestCount: 0, lastTickDay: null, doneDay: null, doneSteps: [] }),
     }),
-    { name: 'ihvan-streak', storage: createJSONStorage(() => AsyncStorage) },
+    {
+      name: 'ihvan-streak',
+      storage: createJSONStorage(() => AsyncStorage),
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...persistedState as Partial<StreakState>,
+        ...normalizeRitualProgress(persistedState),
+      }),
+    },
   ),
 );

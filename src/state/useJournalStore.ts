@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { normalizeReflectionText, updateReflectionEntries, type ReflectionEntry } from '@/lib/journal';
+import { normalizeReflectionEntries, normalizeReflectionText, updateReflectionEntries, type ReflectionEntry } from '@/lib/journal';
 
 export type { ReflectionEntry } from '@/lib/journal';
 
@@ -26,6 +26,13 @@ export const useJournalStore = create<JournalState>()(
       remove: (id) => set((s) => ({ entries: s.entries.filter((entry) => entry.id !== id) })),
       clearEntries: () => set({ entries: [] }),
     }),
-    { name: 'ihvan-journal', storage: createJSONStorage(() => AsyncStorage) },
+    {
+      name: 'ihvan-journal',
+      storage: createJSONStorage(() => AsyncStorage),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<JournalState>;
+        return { ...currentState, ...persisted, entries: normalizeReflectionEntries(persisted.entries) };
+      },
+    },
   ),
 );

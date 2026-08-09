@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { normalizeReflectionText, updateReflectionEntries, type ReflectionEntry } from './journal.ts';
+import { normalizeReflectionEntries, normalizeReflectionText, updateReflectionEntries, type ReflectionEntry } from './journal.ts';
 
 const entries: ReflectionEntry[] = [
   { id: '1', text: 'İlk not', createdAt: '2026-08-07T10:00:00.000Z' },
@@ -19,4 +19,15 @@ test('updates only the selected reflection and preserves its creation time', () 
 
 test('does not replace an existing reflection with empty text', () => {
   assert.deepEqual(updateReflectionEntries(entries, '1', '   '), entries);
+});
+
+test('repairs persisted journal entries and drops unsafe records', () => {
+  assert.deepEqual(normalizeReflectionEntries([
+    { id: ' 1 ', text: '  İlk not  ', createdAt: '2026-08-07T10:00:00.000Z', updatedAt: 'bad' },
+    { id: '1', text: 'duplicate', createdAt: '2026-08-08T10:00:00.000Z' },
+    { id: '2', text: '', createdAt: '2026-08-08T10:00:00.000Z' },
+    { id: '3', text: 'Tarihsiz', createdAt: 'bad' },
+    null,
+  ]), [{ id: '1', text: 'İlk not', createdAt: '2026-08-07T10:00:00.000Z' }]);
+  assert.deepEqual(normalizeReflectionEntries({}), []);
 });
