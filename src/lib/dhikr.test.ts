@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { dhikrCountForDay, dhikrHistoryWithLegacy, dhikrSummary, dhikrTargetStreak, incrementDailyDhikr, isDailyDhikrTargetReached, pruneDhikrHistory, retainDhikrState } from './dhikr.ts';
+import { dhikrCountForDay, dhikrHistoryWithLegacy, dhikrSummary, dhikrTargetStreak, incrementDailyDhikr, isDailyDhikrTargetReached, normalizeDhikrCount, normalizeDhikrHistory, pruneDhikrHistory, retainDhikrState } from './dhikr.ts';
 
 const today = new Date(2026, 7, 8, 12);
 
@@ -53,5 +53,20 @@ test('retains only in-window dhikr state during hydration', () => {
     day: null,
     count: 0,
     history: {},
+  });
+});
+
+test('normalizes malformed persisted dhikr values without inflating stats', () => {
+  assert.equal(normalizeDhikrCount(Number.POSITIVE_INFINITY), 0);
+  assert.equal(normalizeDhikrCount(12.8), 12);
+  assert.deepEqual(normalizeDhikrHistory({ '2026-08-08': 34.9, '2026-08-07': '99', '2026-08-06': -4 }), {
+    '2026-08-08': 34,
+    '2026-08-07': 0,
+    '2026-08-06': 0,
+  });
+  assert.deepEqual(retainDhikrState('2026-08-08', Number.NaN, { '2026-08-08': Number.POSITIVE_INFINITY }, 2, today), {
+    day: '2026-08-08',
+    count: 0,
+    history: { '2026-08-08': 0 },
   });
 });

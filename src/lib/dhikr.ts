@@ -9,6 +9,17 @@ export interface DailyDhikrCount {
 
 export type DhikrHistory = Record<string, number>;
 
+export function normalizeDhikrCount(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+}
+
+export function normalizeDhikrHistory(history: unknown): DhikrHistory {
+  if (!history || typeof history !== 'object' || Array.isArray(history)) return {};
+  return Object.fromEntries(
+    Object.entries(history).map(([day, count]) => [day, normalizeDhikrCount(count)]),
+  );
+}
+
 export function recentDhikrDayKeys(days: number, now = new Date()): string[] {
   if (days <= 0) return [];
   return Array.from({ length: days }, (_, index) => {
@@ -23,22 +34,22 @@ export function dhikrHistoryWithLegacy(history: DhikrHistory = {}, storedDay: st
   return { ...history, [storedDay]: Math.max(0, count) };
 }
 
-export function pruneDhikrHistory(history: DhikrHistory, keepDays = 90, now = new Date()): DhikrHistory {
+export function pruneDhikrHistory(history: unknown, keepDays = 90, now = new Date()): DhikrHistory {
   const keep = new Set(recentDhikrDayKeys(keepDays, now));
-  return Object.fromEntries(Object.entries(history).filter(([key]) => keep.has(key)));
+  return Object.fromEntries(Object.entries(normalizeDhikrHistory(history)).filter(([key]) => keep.has(key)));
 }
 
 export function retainDhikrState(
-  storedDay: string | null,
-  count: number,
-  history: DhikrHistory = {},
+  storedDay: unknown,
+  count: unknown,
+  history: unknown = {},
   keepDays = 90,
   now = new Date(),
 ): { day: string | null; count: number; history: DhikrHistory } {
   const keep = new Set(recentDhikrDayKeys(keepDays, now));
-  const retainedDay = storedDay && keep.has(storedDay) ? storedDay : null;
-  const retainedCount = retainedDay ? Math.max(0, count) : 0;
-  const withLegacy = dhikrHistoryWithLegacy(history, retainedDay, retainedCount);
+  const retainedDay = typeof storedDay === 'string' && keep.has(storedDay) ? storedDay : null;
+  const retainedCount = retainedDay ? normalizeDhikrCount(count) : 0;
+  const withLegacy = dhikrHistoryWithLegacy(normalizeDhikrHistory(history), retainedDay, retainedCount);
   return {
     day: retainedDay,
     count: retainedCount,
@@ -47,7 +58,7 @@ export function retainDhikrState(
 }
 
 export function dhikrSummary(history: DhikrHistory, days: number, now = new Date()) {
-  const counts = recentDhikrDayKeys(days, now).map((key) => Math.max(0, history[key] ?? 0));
+  const counts = recentDhikrDayKeys(days, now).map((key) => normalizeDhikrCount(history[key]));
   return {
     total: counts.reduce((sum, value) => sum + value, 0),
     activeDays: counts.filter((value) => value > 0).length,
@@ -70,14 +81,14 @@ export function dhikrTargetStreak(history: DhikrHistory, days = 90, now = new Da
 }
 
 export function dhikrCountForDay(storedDay: string | null, count: number, date = new Date()): number {
-  return storedDay === dayKey(date) ? Math.max(0, count) : 0;
+  return storedDay === dayKey(date) ? normalizeDhikrCount(count) : 0;
 }
 
 export function incrementDailyDhikr(storedDay: string | null, count: number, date = new Date()): DailyDhikrCount {
   const today = dayKey(date);
   return {
     day: today,
-    count: storedDay === today ? Math.max(0, count) + 1 : 1,
+    count: storedDay === today ? normalizeDhikrCount(count) + 1 : 1,
   };
 }
 
