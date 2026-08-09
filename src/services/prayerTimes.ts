@@ -63,7 +63,21 @@ const labels: Record<PrayerKey, string> = {
 
 const prayerKeys: PrayerKey[] = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
+export function isValidPrayerCoordinates(latitude: unknown, longitude: unknown): boolean {
+  return typeof latitude === 'number'
+    && Number.isFinite(latitude)
+    && latitude >= -90
+    && latitude <= 90
+    && typeof longitude === 'number'
+    && Number.isFinite(longitude)
+    && longitude >= -180
+    && longitude <= 180;
+}
+
 export function prayerDay(latitude: number, longitude: number, date = new Date()): PrayerDay {
+  if (!isValidPrayerCoordinates(latitude, longitude) || !Number.isFinite(date.getTime())) {
+    throw new Error('Geçerli konum ve tarih gerekli.');
+  }
   const coordinates = new Coordinates(latitude, longitude);
   const times = new PrayerTimes(coordinates, date, CalculationMethod.Turkey());
 
@@ -110,6 +124,7 @@ export function formatPrayerCountdown(target: Date, now = new Date()): string {
 }
 
 export function compassTurn(qibla: number, heading: number): number {
+  if (!Number.isFinite(qibla) || !Number.isFinite(heading)) return 0;
   return ((qibla - heading) % 360 + 360) % 360;
 }
 
@@ -123,7 +138,8 @@ export function prayerNotificationPlan(
 ): PrayerNotificationPlanItem[] {
   const plan: PrayerNotificationPlanItem[] = [];
   const included = new Set<PrayerKey>(includedPrayers);
-  for (let offset = 0; offset < days; offset += 1) {
+  const boundedDays = Number.isFinite(days) ? Math.min(10, Math.max(0, Math.floor(days))) : 0;
+  for (let offset = 0; offset < boundedDays; offset += 1) {
     const date = new Date(from);
     date.setDate(date.getDate() + offset);
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
