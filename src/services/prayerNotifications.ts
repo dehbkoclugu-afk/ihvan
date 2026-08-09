@@ -26,23 +26,32 @@ export async function cancelPrayerNotifications() {
 }
 
 async function schedule(latitude: number, longitude: number, locationLabel: string, minutesBefore: PrayerReminderOffset, includedPrayers: readonly PrayerNotificationKey[]) {
+  if (!includedPrayers.length) throw new Error('Bildirim almak için en az bir namaz seç.');
   await cancelPrayerNotifications();
   const plan = prayerNotificationPlan(latitude, longitude, new Date(), 10, minutesBefore, includedPrayers);
-  for (const item of plan) {
-    await Notifications.scheduleNotificationAsync({
-      identifier: item.identifier,
-      content: {
-        title: minutesBefore ? `${item.label} vaktine ${minutesBefore} dk kaldı` : `${item.label} vakti`,
-        body: locationLabel,
-        sound: 'default',
-        data: { kind: 'prayer-time' },
-      },
-      trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DATE,
-        date: item.time,
-        channelId: CHANNEL_ID,
-      },
-    });
+  const scheduledIdentifiers: string[] = [];
+  try {
+    for (const item of plan) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: item.identifier,
+        content: {
+          title: minutesBefore ? `${item.label} vaktine ${minutesBefore} dk kaldı` : `${item.label} vakti`,
+          body: locationLabel,
+          sound: 'default',
+          data: { kind: 'prayer-time' },
+        },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DATE,
+          date: item.time,
+          channelId: CHANNEL_ID,
+        },
+      });
+      scheduledIdentifiers.push(item.identifier);
+    }
+  } catch (cause) {
+    // A failed batch must not leave an invisible partial reminder schedule.
+    await Promise.allSettled(scheduledIdentifiers.map((identifier) => Notifications.cancelScheduledNotificationAsync(identifier)));
+    throw cause;
   }
   return plan.length;
 }
