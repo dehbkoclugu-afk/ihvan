@@ -2,13 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { QURAN_SURAHS } from '@/data/quran';
-import { mergeQuranReadAyahs, recordAyahRead as recordReadingDay, retainQuranReadingState, type QuranReadingDays, type QuranReadingGoal } from '@/lib/quranHabit';
+import { mergeQuranReadAyahs, normalizeQuranAyahKey, normalizeQuranAyahKeys, normalizeQuranReadingGoal, normalizeQuranReadingPosition, recordAyahRead as recordReadingDay, retainQuranReadingState, type QuranReadingDays, type QuranReadingGoal, type QuranReadingPosition } from '@/lib/quranHabit';
 
-export interface QuranPosition {
-  surah: number;
-  ayah: number;
-  updatedAt: string;
-}
+export type QuranPosition = QuranReadingPosition;
 
 interface QuranProgressState {
   lastRead: QuranPosition | null;
@@ -25,8 +21,8 @@ interface QuranProgressState {
   clearProgress: () => void;
 }
 
-const keyFor = (surah: number, ayah: number) => `${surah}:${ayah}`;
 const surahAyahCounts = QURAN_SURAHS.map((surah) => surah.ayahCount);
+const validKeyFor = (surah: unknown, ayah: unknown) => normalizeQuranAyahKey(surah, ayah, surahAyahCounts);
 
 export const useQuranProgressStore = create<QuranProgressState>()(
   persist(
@@ -36,25 +32,30 @@ export const useQuranProgressStore = create<QuranProgressState>()(
       readingDays: {},
       readAyahs: [],
       readingGoal: 5,
-      setLastRead: (surah, ayah) => set({ lastRead: { surah, ayah, updatedAt: new Date().toISOString() } }),
+      setLastRead: (surah, ayah) => set(() => validKeyFor(surah, ayah)
+        ? { lastRead: { surah, ayah, updatedAt: new Date().toISOString() } }
+        : {}),
       recordAyahRead: (surah, ayah, date = new Date()) => set((state) => {
-        const key = keyFor(surah, ayah);
+        const key = validKeyFor(surah, ayah);
+        if (!key) return {};
         return {
           readingDays: recordReadingDay(state.readingDays, key, date),
           readAyahs: mergeQuranReadAyahs(state.readAyahs, state.readingDays, key, surahAyahCounts),
         };
       }),
       markAyahRead: (surah, ayah, date = new Date()) => set((state) => {
-        const key = keyFor(surah, ayah);
+        const key = validKeyFor(surah, ayah);
+        if (!key) return {};
         return {
           lastRead: { surah, ayah, updatedAt: date.toISOString() },
           readingDays: recordReadingDay(state.readingDays, key, date),
           readAyahs: mergeQuranReadAyahs(state.readAyahs, state.readingDays, key, surahAyahCounts),
         };
       }),
-      setReadingGoal: (readingGoal) => set({ readingGoal }),
+      setReadingGoal: (readingGoal) => set({ readingGoal: normalizeQuranReadingGoal(readingGoal) }),
       toggleBookmark: (surah, ayah) => set((state) => {
-        const key = keyFor(surah, ayah);
+        const key = validKeyFor(surah, ayah);
+        if (!key) return {};
         return { bookmarks: state.bookmarks.includes(key) ? state.bookmarks.filter((item) => item !== key) : [key, ...state.bookmarks] };
       }),
       enforceRetention: () => set((state) => retainQuranReadingState(state.readAyahs, state.readingDays, 90, new Date(), surahAyahCounts)),
@@ -66,7 +67,14 @@ export const useQuranProgressStore = create<QuranProgressState>()(
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<QuranProgressState>;
         const retained = retainQuranReadingState(persisted.readAyahs, persisted.readingDays, 90, new Date(), surahAyahCounts);
-        return { ...currentState, ...persisted, ...retained };
+        return {
+          ...currentState,
+          ...persisted,
+          ...retained,
+          lastRead: normalizeQuranReadingPosition(persisted.lastRead, surahAyahCounts),
+          bookmarks: normalizeQuranAyahKeys(persisted.bookmarks, surahAyahCounts),
+          readingGoal: normalizeQuranReadingGoal(persisted.readingGoal),
+        };
       },
       onRehydrateStorage: () => (state) => state?.enforceRetention(),
     },

@@ -4,9 +4,34 @@ export type QuranReadingDays = Record<string, string[]>;
 export type QuranReadingGoal = 5 | 10 | 20;
 export type QuranProgressFilter = 'all' | 'incomplete' | 'complete';
 
+export interface QuranReadingPosition {
+  surah: number;
+  ayah: number;
+  updatedAt: string;
+}
+
 export interface RecentQuranRead {
   day: string;
   ayahKey: string;
+}
+
+export function normalizeQuranReadingGoal(value: unknown): QuranReadingGoal {
+  return value === 10 || value === 20 ? value : 5;
+}
+
+export function normalizeQuranAyahKey(surah: unknown, ayah: unknown, surahAyahCounts: readonly number[]): string | null {
+  if (!Number.isInteger(surah) || !Number.isInteger(ayah)) return null;
+  const key = `${surah}:${ayah}`;
+  return normalizeQuranAyahKeys([key], surahAyahCounts)[0] ?? null;
+}
+
+export function normalizeQuranReadingPosition(value: unknown, surahAyahCounts: readonly number[]): QuranReadingPosition | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const candidate = value as Record<string, unknown>;
+  const key = normalizeQuranAyahKey(candidate.surah, candidate.ayah, surahAyahCounts);
+  if (!key || typeof candidate.updatedAt !== 'string' || !Number.isFinite(Date.parse(candidate.updatedAt))) return null;
+  const [surah, ayah] = key.split(':').map(Number);
+  return { surah, ayah, updatedAt: candidate.updatedAt };
 }
 
 export function normalizeQuranAyahKeys(keys: unknown, surahAyahCounts: readonly number[]): string[] {
