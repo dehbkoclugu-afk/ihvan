@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { isPrayerDayComplete, prayerCompletionPercent, prayerCompletionStreak, prayerDayFilterMatches, prayerPercentFor, prunePrayerCompletions, recentDayKeys } from './prayerTracking.ts';
+import { isPrayerDayComplete, normalizePrayerCompletions, prayerCompletionPercent, prayerCompletionStreak, prayerDayFilterMatches, prayerPercentFor, prunePrayerCompletions, recentDayKeys, type PrayerCompletions } from './prayerTracking.ts';
 
 const now = new Date(2026, 7, 8, 12);
 
@@ -16,6 +16,12 @@ test('calculates prayer completion over a seven-day window', () => {
   assert.equal(prayerCompletionPercent({}, 7, now), 0);
 });
 
+test('ignores duplicate and malformed persisted prayers in completion metrics', () => {
+  const persisted = { '2026-08-08': ['fajr', 'fajr', 'dhuhr', 'invalid'] } as unknown as PrayerCompletions;
+  assert.deepEqual(normalizePrayerCompletions(persisted['2026-08-08']), ['fajr', 'dhuhr']);
+  assert.equal(prayerCompletionPercent(persisted, 1, now), 40);
+});
+
 test('calculates completion for one prayer over a window', () => {
   assert.equal(prayerPercentFor({
     '2026-08-08': ['fajr', 'isha'],
@@ -26,11 +32,12 @@ test('calculates completion for one prayer over a window', () => {
 });
 
 test('prunes completion history outside the retention window', () => {
-  assert.deepEqual(prunePrayerCompletions({
+  const persisted = {
     '2026-08-08': ['fajr'],
-    '2026-08-07': ['isha'],
+    '2026-08-07': ['isha', 'isha', 'invalid'],
     '2026-08-06': ['dhuhr'],
-  }, 2, now), {
+  } as unknown as PrayerCompletions;
+  assert.deepEqual(prunePrayerCompletions(persisted, 2, now), {
     '2026-08-08': ['fajr'],
     '2026-08-07': ['isha'],
   });

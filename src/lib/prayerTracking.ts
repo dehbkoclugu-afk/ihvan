@@ -12,6 +12,12 @@ export type TrackedPrayerKey = (typeof TRACKED_PRAYERS)[number]['key'];
 export type PrayerCompletions = Record<string, TrackedPrayerKey[]>;
 export type PrayerDayFilter = 'all' | 'incomplete' | 'complete';
 
+export function normalizePrayerCompletions(completed: unknown): TrackedPrayerKey[] {
+  if (!Array.isArray(completed)) return [];
+  const selected = new Set(completed.filter((value): value is string => typeof value === 'string'));
+  return TRACKED_PRAYERS.filter((prayer) => selected.has(prayer.key)).map((prayer) => prayer.key);
+}
+
 export function recentDayKeys(days: number, now = new Date()): string[] {
   if (days <= 0) return [];
   return Array.from({ length: days }, (_, index) => {
@@ -24,22 +30,23 @@ export function recentDayKeys(days: number, now = new Date()): string[] {
 export function prayerCompletionPercent(completions: PrayerCompletions, days = 7, now = new Date()): number {
   const keys = recentDayKeys(days, now);
   if (!keys.length) return 0;
-  const completed = keys.reduce((sum, key) => sum + Math.min(completions[key]?.length ?? 0, TRACKED_PRAYERS.length), 0);
+  const completed = keys.reduce((sum, key) => sum + normalizePrayerCompletions(completions[key]).length, 0);
   return Math.round((completed / (keys.length * TRACKED_PRAYERS.length)) * 100);
 }
 
 export function prayerPercentFor(completions: PrayerCompletions, prayer: TrackedPrayerKey, days = 30, now = new Date()): number {
   const keys = recentDayKeys(days, now);
   if (!keys.length) return 0;
-  const completed = keys.reduce((sum, key) => sum + (completions[key]?.includes(prayer) ? 1 : 0), 0);
+  const completed = keys.reduce((sum, key) => sum + (normalizePrayerCompletions(completions[key]).includes(prayer) ? 1 : 0), 0);
   return Math.round((completed / keys.length) * 100);
 }
 
-export function isPrayerDayComplete(completed: readonly TrackedPrayerKey[] = []): boolean {
-  return TRACKED_PRAYERS.every((prayer) => completed.includes(prayer.key));
+export function isPrayerDayComplete(completed: unknown = []): boolean {
+  const normalized = normalizePrayerCompletions(completed);
+  return TRACKED_PRAYERS.every((prayer) => normalized.includes(prayer.key));
 }
 
-export function prayerDayFilterMatches(completed: readonly TrackedPrayerKey[] = [], filter: PrayerDayFilter): boolean {
+export function prayerDayFilterMatches(completed: unknown = [], filter: PrayerDayFilter): boolean {
   if (filter === 'all') return true;
   const complete = isPrayerDayComplete(completed);
   return filter === 'complete' ? complete : !complete;
@@ -62,5 +69,9 @@ export function prayerCompletionStreak(completions: PrayerCompletions, days = 90
 
 export function prunePrayerCompletions(completions: PrayerCompletions, keepDays = 90, now = new Date()): PrayerCompletions {
   const keep = new Set(recentDayKeys(keepDays, now));
-  return Object.fromEntries(Object.entries(completions).filter(([key]) => keep.has(key)));
+  return Object.fromEntries(
+    Object.entries(completions)
+      .filter(([key]) => keep.has(key))
+      .map(([key, completed]) => [key, normalizePrayerCompletions(completed)]),
+  );
 }
