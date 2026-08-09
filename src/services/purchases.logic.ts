@@ -1,8 +1,23 @@
 export type PlanId = 'monthly' | 'annual' | 'lifetime';
 export type PurchaseFailure = 'cancelled' | 'pending' | 'failed';
 
+export interface PersistedEntitlementState {
+  isPlus: false;
+  sawDiscountOffer: boolean;
+}
+
 const CANCELLED = '1';
 const PAYMENT_PENDING = '20';
+
+export function normalizePersistedEntitlement(value: unknown): PersistedEntitlementState {
+  const candidate = value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+  return {
+    isPlus: false,
+    sawDiscountOffer: candidate.sawDiscountOffer === true,
+  };
+}
 
 export function classifyPurchaseError(error: unknown): PurchaseFailure {
   const code =

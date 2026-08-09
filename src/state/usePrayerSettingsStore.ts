@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { DEFAULT_PRAYER_NOTIFICATION_KEYS, type PrayerNotificationKey, type PrayerReminderOffset } from '@/services/prayerTimes';
+import { DEFAULT_PRAYER_NOTIFICATION_KEYS, normalizePrayerNotificationSettings, type PrayerNotificationKey, type PrayerReminderOffset } from '@/services/prayerTimes';
 
 interface PrayerSettingsState {
   notificationsEnabled: boolean;
@@ -26,6 +26,14 @@ export const usePrayerSettingsStore = create<PrayerSettingsState>()(
           : [...state.notificationPrayers, prayer],
       })),
     }),
-    { name: 'ihvan-prayer-settings', storage: createJSONStorage(() => AsyncStorage) },
+    {
+      name: 'ihvan-prayer-settings',
+      storage: createJSONStorage(() => AsyncStorage),
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...persistedState as Partial<PrayerSettingsState>,
+        ...normalizePrayerNotificationSettings(persistedState),
+      }),
+    },
   ),
 );

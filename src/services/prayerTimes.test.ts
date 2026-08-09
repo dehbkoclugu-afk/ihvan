@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { compassTurn, formatPrayerCountdown, nextPrayer, prayerDay, prayerNotificationPlan } from './prayerTimes.ts';
+import { compassTurn, formatPrayerCountdown, nextPrayer, normalizePrayerNotificationSettings, prayerDay, prayerNotificationPlan } from './prayerTimes.ts';
 
 const ISTANBUL = { latitude: 41.0082, longitude: 28.9784 };
 
@@ -59,4 +59,21 @@ test('moves prayer reminders earlier by the selected offset', () => {
   assert.equal(early.length, exact.length);
   assert.deepEqual(early.map((item) => item.identifier), exact.map((item) => item.identifier));
   assert.ok(early.every((item, index) => exact[index].time.getTime() - item.time.getTime() === 15 * 60_000));
+});
+
+test('normalizes persisted prayer notification settings', () => {
+  assert.deepEqual(normalizePrayerNotificationSettings({
+    notificationsEnabled: true,
+    reminderMinutesBefore: 12,
+    notificationPrayers: ['isha', 'fajr', 'fajr', 'sunrise', null],
+  }), {
+    notificationsEnabled: true,
+    reminderMinutesBefore: 0,
+    notificationPrayers: ['fajr', 'isha'],
+  });
+  assert.deepEqual(normalizePrayerNotificationSettings({ notificationsEnabled: true, notificationPrayers: [] }), {
+    notificationsEnabled: false,
+    reminderMinutesBefore: 0,
+    notificationPrayers: [],
+  });
 });
