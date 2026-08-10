@@ -1,4 +1,4 @@
-export type PlanId = 'monthly' | 'annual' | 'lifetime';
+export type PlanId = 'monthly' | 'annual';
 export type PurchaseFailure = 'cancelled' | 'pending' | 'failed';
 
 export interface PersistedEntitlementState {
@@ -32,12 +32,9 @@ export function classifyPurchaseError(error: unknown): PurchaseFailure {
 export function planIdForPackage(packageType: string, identifier: string): PlanId | null {
   if (packageType === 'ANNUAL') return 'annual';
   if (packageType === 'MONTHLY') return 'monthly';
-  if (packageType === 'LIFETIME') return 'lifetime';
-
   const id = identifier.toLowerCase();
   if (id.includes('annual') || id.includes('yearly')) return 'annual';
   if (id.includes('monthly')) return 'monthly';
-  if (id.includes('lifetime')) return 'lifetime';
   return null;
 }
 

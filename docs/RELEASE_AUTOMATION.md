@@ -29,9 +29,21 @@ doğrular ve APK'yı emülatörde açar. Gereken GitHub Actions secrets:
 - `EXPO_PUBLIC_REVENUECAT_ANDROID_KEY`
 
 Entitlement kimliği `ihvan_plus` olarak build ortamına verilir. Workflow elle
-tetiklenir. İstenirse pozitif bir `version_code` girilebilir; boş bırakılırsa
-workflow run numarası kullanılır. Play Console'daki en yüksek versionCode'dan
-daha büyük bir değer seçilmelidir.
+tetiklenir. İmzalı artifact üretimine izin vermek için `release_confirmed`
+seçeneğinin açıkça işaretlenmesi zorunludur; işaretlenmeyen koşu ilk adımda
+durur. İstenirse pozitif bir `version_code` girilebilir; boş bırakılırsa
+workflow run numarası kullanılır.
+
+Operatör sırası:
+
+1. Play Console'da kullanılan en yüksek `versionCode` değerini kontrol et.
+2. Bu değerden büyük, pozitif bir `version_code` seç.
+3. Workflow'u başlatırken `release_confirmed` seçeneğini işaretle.
+4. Başarılı koşudan `ihvan-signed-aab` artifact'ini indir ve AAB dosyasının
+   SHA-256 özetini kaydet (örneğin `sha256sum app-release.aab`).
+5. Aynı AAB dosyasını önce Play Console internal testing kanalına yükle.
+6. Workflow run URL'sini, SHA-256 özetini ve kullanılan `versionCode` değerini
+   yayın kanıtlarıyla birlikte sakla.
 
 ## EAS Build and Submit
 

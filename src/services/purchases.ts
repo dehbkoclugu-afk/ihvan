@@ -38,26 +38,14 @@ export type PurchaseResult =
 const DEV_PLANS: PurchasePlan[] = [
   { id: 'annual', price: '$59.99', monthlyPrice: '$4.99', trialEligible: true, trialDays: 7 },
   { id: 'monthly', price: '$9.99', monthlyPrice: '$9.99', trialEligible: false, trialDays: null },
-  { id: 'lifetime', price: '$129.99', monthlyPrice: null, trialEligible: false, trialDays: null },
 ];
 
 const apiKey =
   Platform.OS === 'ios'
     ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY
     : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY;
-const configuredEntitlementId =
-  process.env.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID?.trim();
-const entitlementIds = Array.from(
-  new Set(
-    [
-      configuredEntitlementId,
-      'plus',
-      'Ihvan Plus',
-      'ihvan_plus',
-      'ihvan-plus',
-    ].filter((id): id is string => Boolean(id)),
-  ),
-);
+const entitlementId =
+  process.env.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID?.trim() || 'ihvan_plus';
 
 let rc: typeof import('react-native-purchases').default | null = null;
 let initPromise: Promise<void> | null = null;
@@ -67,7 +55,7 @@ const packages = new Map<PlanId, PurchasesPackage>();
 function applyCustomerInfo(info: Awaited<ReturnType<NonNullable<typeof rc>['getCustomerInfo']>>) {
   useEntitlementStore
     .getState()
-    .setPlus(hasActiveEntitlement(info.entitlements.active, entitlementIds));
+    .setPlus(hasActiveEntitlement(info.entitlements.active, [entitlementId]));
 }
 
 function trialDaysFor(pkg: PurchasesPackage): number | null {
@@ -190,7 +178,7 @@ export async function purchase(planId: PlanId): Promise<PurchaseResult> {
     const { customerInfo } = await rc.purchasePackage(pkg);
     const active = hasActiveEntitlement(
       customerInfo.entitlements.active,
-      entitlementIds,
+      [entitlementId],
     );
     useEntitlementStore.getState().setPlus(active);
     return active ? { status: 'purchased' } : { status: 'failed' };
@@ -203,7 +191,7 @@ export async function restore(): Promise<boolean> {
   await initPurchases();
   if (!rc) return __DEV__ && useEntitlementStore.getState().isPlus;
   const info = await rc.restorePurchases();
-  const active = hasActiveEntitlement(info.entitlements.active, entitlementIds);
+  const active = hasActiveEntitlement(info.entitlements.active, [entitlementId]);
   useEntitlementStore.getState().setPlus(active);
   return active;
 }

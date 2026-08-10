@@ -8,7 +8,7 @@ import { loadPlans, purchase, restore, type PurchasePlan, type PlanId } from '@/
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
 
-const names: Record<PlanId, string> = { annual: 'Yıllık', monthly: 'Aylık', lifetime: 'Ömür boyu' };
+const names: Record<PlanId, string> = { annual: 'Yıllık', monthly: 'Aylık' };
 
 export default function Paywall() {
   const t = useTheme();

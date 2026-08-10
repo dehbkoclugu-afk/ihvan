@@ -7,6 +7,11 @@ on:
         description: Optional positive Android versionCode; defaults to this workflow run number
         required: false
         type: string
+      release_confirmed:
+        description: Confirm this run may produce signed Android release artifacts
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -26,6 +31,14 @@ jobs:
       EXPO_PUBLIC_REVENUECAT_ANDROID_KEY: ${{ secrets.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY }}
       EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID: ihvan_plus
     steps:
+      - name: Confirm Android release
+        shell: bash
+        run: |
+          if [[ "${{ inputs.release_confirmed }}" != "true" ]]; then
+            echo "Android release was not explicitly confirmed"
+            exit 1
+          fi
+
       - name: Checkout
         uses: actions/checkout@v4
 

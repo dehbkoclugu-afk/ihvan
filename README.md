@@ -34,3 +34,10 @@ RevenueCat runs in development mock mode until `EXPO_PUBLIC_REVENUECAT_IOS_KEY` 
 Prayer calculations use Adhan JS `CalculationMethod.Turkey()`, documented by its maintainers as an approximation of the Diyanet method. The app requests foreground location only and does not enable background location tracking.
 
 Prayer reminders are local device notifications, opt-in only, and are refreshed as a rolling 10-day schedule when the prayer screen is opened. Android declares `SCHEDULE_EXACT_ALARM` so scheduled prayer reminders can target exact calculated times.
+
+## Release preparation
+
+- [Release automation](docs/RELEASE_AUTOMATION.md)
+- [Android device QA](docs/release/ANDROID_DEVICE_QA.md)
+- [Play Console and RevenueCat values](docs/release/PLAY_CONSOLE_VALUES.md)
+- [Android release checklist](docs/release/ANDROID_RELEASE_CHECKLIST.md)

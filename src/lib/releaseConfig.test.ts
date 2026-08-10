@@ -3,7 +3,14 @@ import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const appConfig = JSON.parse(readFileSync('app.json', 'utf8')) as { expo: Record<string, unknown> };
+const packageConfig = JSON.parse(readFileSync('package.json', 'utf8')) as { version: string };
 const easConfig = JSON.parse(readFileSync('eas.json', 'utf8')) as Record<string, unknown>;
+
+test('Android 1.0 release identity is canonical', () => {
+  assert.equal(appConfig.expo.version, '1.0.0');
+  assert.equal(packageConfig.version, '1.0.0');
+  assert.equal((appConfig.expo.android as { package?: string }).package, 'com.ihvan.quran');
+});
 
 test('release config has no placeholder credentials or background location', () => {
   const serialized = JSON.stringify({ appConfig, easConfig });
@@ -54,6 +61,10 @@ test('release workflows preserve secret and privacy boundaries', () => {
     assert.ok(signed.includes(`secrets.${secret}`), `signed workflow must read ${secret} from Actions secrets`);
   }
   assert.ok(signed.includes('node scripts/verify-native-config.mjs'));
+  assert.ok(signed.includes('EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID: ihvan_plus'));
+  assert.ok(signed.includes('release_confirmed:'));
+  assert.ok(signed.includes('inputs.release_confirmed'));
+  assert.ok(signed.includes('Confirm Android release'));
   assert.ok(signed.includes('jarsigner -verify'));
   assert.ok(signed.includes('apksigner'));
   assert.ok(signed.includes('rm -f android/app/upload-keystore.jks'));
@@ -70,4 +81,60 @@ test('release workflows preserve secret and privacy boundaries', () => {
   assert.ok(eas.includes('--profile ${{ inputs.profile }}'));
   assert.ok(eas.includes('--non-interactive'));
   assert.ok(eas.includes('rm -f play-service-account.json'));
+});
+
+test('Android release operator documents cover every manual gate', () => {
+  const deviceQa = readFileSync('docs/release/ANDROID_DEVICE_QA.md', 'utf8');
+  for (const label of [
+    'Clean install',
+    'Quran integrity',
+    'Location',
+    'Qibla',
+    'Notifications',
+    'Purchase',
+    'Restore',
+    'Data export',
+    'Accessibility',
+    'Offline',
+    'Evidence',
+  ]) {
+    assert.ok(deviceQa.includes(label), `device QA must include ${label}`);
+  }
+
+  const consoleValues = readFileSync('docs/release/PLAY_CONSOLE_VALUES.md', 'utf8');
+  for (const value of [
+    'com.ihvan.quran',
+    'ihvan_plus',
+    'monthly',
+    'annual',
+    'Google Play service account',
+    'license tester',
+    'Foreground location',
+    'Background location: not used',
+    'Purchase data',
+  ]) {
+    assert.ok(consoleValues.includes(value), `Play values must include ${value}`);
+  }
+
+  const checklist = readFileSync('docs/release/ANDROID_RELEASE_CHECKLIST.md', 'utf8');
+  for (const value of [
+    'Phase 0',
+    'Phase 1',
+    'Phase 2',
+    'Phase 3',
+    'Phase 4',
+    'Phase 5',
+    'Phase 6',
+    'GO',
+    'NO-GO',
+    'AAB SHA-256',
+    'versionCode',
+    'Play pre-launch report',
+    'RevenueCat purchase',
+    'restore',
+    'staged rollout',
+    '72-hour monitoring',
+  ]) {
+    assert.ok(checklist.includes(value), `release checklist must include ${value}`);
+  }
 });
