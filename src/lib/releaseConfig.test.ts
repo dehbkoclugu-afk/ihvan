@@ -65,6 +65,10 @@ test('release workflows preserve secret and privacy boundaries', () => {
   assert.ok(signed.includes('release_confirmed:'));
   assert.ok(signed.includes('inputs.release_confirmed'));
   assert.ok(signed.includes('Confirm Android release'));
+  assert.ok(signed.includes('run: npm test'));
+  assert.ok(signed.includes('run: npm run typecheck'));
+  assert.ok(signed.includes('run: npm run lint'));
+  assert.ok(signed.includes('run: git diff --check'));
   assert.ok(signed.includes('jarsigner -verify'));
   assert.ok(signed.includes('apksigner'));
   assert.ok(signed.includes('rm -f android/app/upload-keystore.jks'));

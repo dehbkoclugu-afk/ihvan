@@ -41,3 +41,5 @@ Prayer reminders are local device notifications, opt-in only, and are refreshed 
 - [Android device QA](docs/release/ANDROID_DEVICE_QA.md)
 - [Play Console and RevenueCat values](docs/release/PLAY_CONSOLE_VALUES.md)
 - [Android release checklist](docs/release/ANDROID_RELEASE_CHECKLIST.md)
+- [Google Play store listing](docs/release/PLAY_STORE_LISTING.md)
+- [Paywall release QA](docs/release/PAYWALL_QA.md)

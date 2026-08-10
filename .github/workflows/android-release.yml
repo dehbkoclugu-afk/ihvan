@@ -74,6 +74,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Run tests
+        run: npm test
+
+      - name: Run typecheck
+        run: npm run typecheck
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Check generated diff
+        run: git diff --check
+
       - name: Generate native projects
         run: npx expo prebuild --no-install --clean
 
