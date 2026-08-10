@@ -16,6 +16,15 @@ işaretleri dahil Unicode karakter sayısı olarak doğrulanmıştır.
 
 - Karakter: **78 / 80**
 
+## Yenilikler — 1.0.0
+
+İhvan’ın ilk sürümü hazır. Arapça Kur’an’ı sûre ve cüz üzerinden okuyabilir;
+ayet arama, yer imleri ve kaldığın yer özelliklerini kullanabilirsin. Namaz
+vakitleri, kıble, isteğe bağlı yerel bildirimler, namaz takibi, zikir, günlük
+ritüel ve özel düşünce günlüğü de bu sürümde yer alıyor.
+
+- Karakter: **287 / 500**
+
 ## Tam açıklama
 
 İhvan; Kur’an okumayı ve günlük ibadet düzenini sakin, anlaşılır bir deneyimde
