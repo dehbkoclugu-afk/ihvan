@@ -1,4 +1,6 @@
 import { CalculationMethod, Coordinates, PrayerTimes, Qibla } from 'adhan';
+import type { AppLocale } from '../i18n/applicationLocales.ts';
+import { translationFor } from '../i18n/translations.ts';
 
 export type PrayerKey = 'fajr' | 'sunrise' | 'dhuhr' | 'asr' | 'maghrib' | 'isha';
 export type PrayerNotificationKey = Exclude<PrayerKey, 'sunrise'>;
@@ -20,6 +22,7 @@ export interface PrayerDay {
 
 export interface PrayerNotificationPlanItem {
   identifier: string;
+  key: PrayerNotificationKey;
   label: string;
   time: Date;
 }
@@ -52,15 +55,6 @@ export function normalizePrayerNotificationSettings(value: unknown): PrayerNotif
   };
 }
 
-const labels: Record<PrayerKey, string> = {
-  fajr: 'İmsak',
-  sunrise: 'Güneş',
-  dhuhr: 'Öğle',
-  asr: 'İkindi',
-  maghrib: 'Akşam',
-  isha: 'Yatsı',
-};
-
 const prayerKeys: PrayerKey[] = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
 
 export function isValidPrayerCoordinates(latitude: unknown, longitude: unknown): boolean {
@@ -74,9 +68,9 @@ export function isValidPrayerCoordinates(latitude: unknown, longitude: unknown):
     && longitude <= 180;
 }
 
-export function prayerDay(latitude: number, longitude: number, date = new Date()): PrayerDay {
+export function prayerDay(latitude: number, longitude: number, date = new Date(), locale: AppLocale = 'tr'): PrayerDay {
   if (!isValidPrayerCoordinates(latitude, longitude) || !Number.isFinite(date.getTime())) {
-    throw new Error('Geçerli konum ve tarih gerekli.');
+    throw new Error(translationFor(locale, 'prayerTimes.invalidInput'));
   }
   const coordinates = new Coordinates(latitude, longitude);
   const times = new PrayerTimes(coordinates, date, CalculationMethod.Turkey());
@@ -84,29 +78,29 @@ export function prayerDay(latitude: number, longitude: number, date = new Date()
   return {
     moments: prayerKeys.map((key) => ({
       key,
-      label: labels[key],
+      label: translationFor(locale, `prayer.${key}`),
       time: times[key],
       isPrayer: key !== 'sunrise',
     })),
     qibla: Qibla(coordinates),
-    methodLabel: 'Adhan Turkey · Diyanet yöntemi yaklaşımı',
+    methodLabel: translationFor(locale, 'prayerTimes.method'),
   };
 }
 
-export function nextPrayer(latitude: number, longitude: number, now = new Date()): PrayerMoment {
-  const today = prayerDay(latitude, longitude, now).moments.filter((moment) => moment.isPrayer);
+export function nextPrayer(latitude: number, longitude: number, now = new Date(), locale: AppLocale = 'tr'): PrayerMoment {
+  const today = prayerDay(latitude, longitude, now, locale).moments.filter((moment) => moment.isPrayer);
   const next = today.find((moment) => moment.time.getTime() > now.getTime());
   if (next) return next;
 
   const tomorrow = new Date(now);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  const first = prayerDay(latitude, longitude, tomorrow).moments.find((moment) => moment.key === 'fajr');
+  const first = prayerDay(latitude, longitude, tomorrow, locale).moments.find((moment) => moment.key === 'fajr');
   if (!first) throw new Error('Tomorrow fajr could not be calculated');
   return first;
 }
 
-export function formatPrayerTime(date: Date, timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone): string {
-  return new Intl.DateTimeFormat('tr-TR', {
+export function formatPrayerTime(date: Date, timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone, locale: AppLocale = 'tr'): string {
+  return new Intl.DateTimeFormat(locale, {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
@@ -114,13 +108,15 @@ export function formatPrayerTime(date: Date, timeZone = Intl.DateTimeFormat().re
   }).format(date);
 }
 
-export function formatPrayerCountdown(target: Date, now = new Date()): string {
+export function formatPrayerCountdown(target: Date, now = new Date(), locale: AppLocale = 'tr'): string {
   const remainingMinutes = Math.max(0, Math.ceil((target.getTime() - now.getTime()) / 60_000));
-  if (!remainingMinutes) return 'şimdi';
+  if (!remainingMinutes) return translationFor(locale, 'prayerTimes.countdownNow');
   const hours = Math.floor(remainingMinutes / 60);
   const minutes = remainingMinutes % 60;
-  if (!hours) return `${minutes} dk`;
-  return minutes ? `${hours} sa ${minutes} dk` : `${hours} sa`;
+  if (!hours) return translationFor(locale, 'prayerTimes.countdownMinutes', { minutes });
+  return minutes
+    ? translationFor(locale, 'prayerTimes.countdownHoursMinutes', { hours, minutes })
+    : translationFor(locale, 'prayerTimes.countdownHours', { hours });
 }
 
 export function compassTurn(qibla: number, heading: number): number {
@@ -145,8 +141,8 @@ export function prayerNotificationPlan(
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     for (const moment of prayerDay(latitude, longitude, date).moments) {
       const notificationTime = new Date(moment.time.getTime() - minutesBefore * 60_000);
-      if (!moment.isPrayer || !included.has(moment.key) || notificationTime.getTime() <= from.getTime()) continue;
-      plan.push({ identifier: `ihvan-prayer-${dateKey}-${moment.key}`, label: moment.label, time: notificationTime });
+      if (!moment.isPrayer || moment.key === 'sunrise' || !included.has(moment.key) || notificationTime.getTime() <= from.getTime()) continue;
+      plan.push({ identifier: `ihvan-prayer-${dateKey}-${moment.key}`, key: moment.key, label: moment.label, time: notificationTime });
     }
   }
   return plan;

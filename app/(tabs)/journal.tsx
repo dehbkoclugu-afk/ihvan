@@ -1,15 +1,21 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
+import { ArtSlot } from '@/components/ArtSlot';
 import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
+import { useArtwork } from '@/hooks/useArtwork';
 import { useTheme } from '@/hooks/useTheme';
+import { formatLocaleDate, useT } from '@/i18n';
+import { rowDirection, textAlignment } from '@/i18n/direction';
 import { useJournalStore } from '@/state/useJournalStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
 
 export default function Journal() {
-  const t = useTheme();
+  const theme = useTheme();
+  const artwork = useArtwork();
+  const { locale, t } = useT();
   const [text, setText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
@@ -28,12 +34,42 @@ export default function Journal() {
     if (editingId === id) cancelEdit();
     setPendingDeleteId(null);
   };
+
   return <Screen tabbed>
-    <Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 32 }}>Tefekkür notları</Text>
-    <Text style={{ color: t.inkSoft, fontFamily: fonts.sans, lineHeight: 22, marginTop: 6 }}>Sadece cihazında kalan küçük notlar.</Text>
-    <TextInput accessibilityLabel="Tefekkür notu" multiline value={text} onChangeText={setText} placeholder={editingId ? 'Notunu düzenle' : 'Bugün aklında kalan ne?'} placeholderTextColor={t.inkFaint} style={{ minHeight: 132, marginTop: spacing.xl, backgroundColor: t.surface, borderWidth: 1, borderColor: editingId ? t.gold : t.border, borderRadius: radius.card, color: t.ink, fontFamily: fonts.sans, fontSize: 16, lineHeight: 24, padding: spacing.lg, textAlignVertical: 'top' }} />
-    <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: spacing.sm, marginTop: spacing.md }}>{editingId ? <Pressable accessibilityRole="button" onPress={cancelEdit} style={{ borderRadius: radius.pill, paddingHorizontal: spacing.lg, paddingVertical: 11, backgroundColor: t.surface }}><Text style={{ color: t.inkSoft, fontFamily: fonts.sansSemiBold }}>Vazgeç</Text></Pressable> : null}<Pressable accessibilityRole="button" accessibilityState={{ disabled: !canSave }} disabled={!canSave} onPress={save} style={{ backgroundColor: t.gold, borderRadius: radius.pill, paddingHorizontal: spacing.xl, paddingVertical: 11, opacity: canSave ? 1 : 0.45 }}><Text style={{ color: t.onGold, fontFamily: fonts.sansBold }}>{editingId ? 'Güncelle' : 'Kaydet'}</Text></Pressable></View>
-    <SectionHeader title="Geçmiş" />
-    {entries.length === 0 ? <Text style={{ color: t.inkFaint, fontFamily: fonts.sans }}>İlk notun burada görünecek.</Text> : <View style={{ gap: spacing.sm }}>{entries.map((entry) => <View key={entry.id} style={{ backgroundColor: t.surface, borderWidth: 1, borderColor: editingId === entry.id ? t.gold : t.border, borderRadius: radius.inner, padding: spacing.lg }}><Text style={{ color: t.ink, fontFamily: fonts.sans, lineHeight: 22 }}>{entry.text}</Text><View style={{ flexDirection: 'row', alignItems: 'center', marginTop: spacing.sm }}><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, flex: 1 }}>{new Date(entry.updatedAt ?? entry.createdAt).toLocaleDateString('tr-TR')}{entry.updatedAt ? ' · düzenlendi' : ''}</Text><Pressable accessibilityRole="button" accessibilityLabel="Notu düzenle" hitSlop={8} onPress={() => startEdit(entry.id, entry.text)} style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="pencil-outline" size={17} color={t.inkSoft} /></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Notu sil" hitSlop={8} onPress={() => setPendingDeleteId(entry.id)} style={{ width: 34, height: 34, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="trash-outline" size={17} color={t.danger} /></Pressable></View>{pendingDeleteId === entry.id ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: t.border }}><Text style={{ color: t.inkSoft, fontFamily: fonts.sansMedium, fontSize: 11, flex: 1 }}>Bu not silinsin mi?</Text><Pressable accessibilityRole="button" onPress={() => setPendingDeleteId(null)} style={{ paddingHorizontal: spacing.md, paddingVertical: 8 }}><Text style={{ color: t.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 11 }}>Vazgeç</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel="Notu silmeyi onayla" onPress={() => confirmDelete(entry.id)} style={{ paddingHorizontal: spacing.md, paddingVertical: 8, borderRadius: radius.pill, backgroundColor: t.danger }}><Text style={{ color: '#FFFFFF', fontFamily: fonts.sansBold, fontSize: 11 }}>Sil</Text></Pressable></View> : null}</View>)}</View>}
+    <Text style={{ color: theme.ink, fontFamily: fonts.serif, fontSize: 32, textAlign: textAlignment(locale) }}>{t('journal.title')}</Text>
+    <Text style={{ color: theme.inkSoft, fontFamily: fonts.sans, lineHeight: 22, marginTop: 6, textAlign: textAlignment(locale) }}>{t('journal.subtitle')}</Text>
+
+    <ArtSlot id="I9-night-reflection" variant="card" height={148} style={{ marginTop: spacing.xl }} />
+    <ArtSlot id="I11-journal-compose" variant="row" height={96} style={{ marginTop: spacing.xl }} />
+    <TextInput
+      accessibilityLabel={t('journal.noteA11y', { date: formatLocaleDate(new Date()) })}
+      multiline
+      value={text}
+      onChangeText={setText}
+      placeholder={t(editingId ? 'journal.editPlaceholder' : 'journal.placeholder')}
+      placeholderTextColor={theme.inkFaint}
+      style={{ minHeight: 132, marginTop: spacing.sm, backgroundColor: theme.surface, borderWidth: 1, borderColor: editingId ? theme.gold : theme.border, borderRadius: radius.card, color: theme.ink, fontFamily: fonts.sans, fontSize: 16, lineHeight: 24, padding: spacing.lg, textAlign: textAlignment(locale), textAlignVertical: 'top' }}
+    />
+    <View style={{ flexDirection: rowDirection(locale), justifyContent: 'flex-start', gap: spacing.sm, marginTop: spacing.md }}>
+      {editingId ? <Pressable accessibilityRole="button" onPress={cancelEdit} style={{ borderRadius: radius.pill, paddingHorizontal: spacing.lg, paddingVertical: 11, backgroundColor: theme.surface }}><Text style={{ color: theme.inkSoft, fontFamily: fonts.sansSemiBold }}>{t('common.cancel')}</Text></Pressable> : null}
+      <Pressable accessibilityRole="button" accessibilityState={{ disabled: !canSave }} disabled={!canSave} onPress={save} style={{ backgroundColor: theme.gold, borderRadius: radius.pill, paddingHorizontal: spacing.xl, paddingVertical: 11, opacity: canSave ? 1 : 0.45 }}><Text style={{ color: theme.onGold, fontFamily: fonts.sansBold }}>{t(editingId ? 'journal.update' : 'journal.save')}</Text></Pressable>
+    </View>
+
+    <SectionHeader title={t('common.history')} />
+    {entries.length === 0 ? <ArtSlot id="I10-journal-empty" variant="card" height={190}>
+      <View style={{ flex: 1, justifyContent: 'flex-end' }}><Text style={{ color: artwork.foreground, fontFamily: fonts.sansSemiBold, fontSize: 15, lineHeight: 21, textAlign: textAlignment(locale) }}>{t('journal.empty')}</Text></View>
+    </ArtSlot> : <View style={{ gap: spacing.sm }}>{entries.map((entry) => <View key={entry.id} style={{ backgroundColor: theme.surface, borderWidth: 1, borderColor: editingId === entry.id ? theme.gold : theme.border, borderRadius: radius.inner, padding: spacing.lg }}>
+      <Text style={{ color: theme.ink, fontFamily: fonts.sans, lineHeight: 22, textAlign: textAlignment(locale) }}>{entry.text}</Text>
+      <View style={{ flexDirection: rowDirection(locale), alignItems: 'center', marginTop: spacing.sm }}>
+        <Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 11, flex: 1, textAlign: textAlignment(locale) }}>{formatLocaleDate(new Date(entry.updatedAt ?? entry.createdAt))}{entry.updatedAt ? ` · ${t('journal.edited')}` : ''}</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('journal.editA11y')} hitSlop={8} onPress={() => startEdit(entry.id, entry.text)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="pencil-outline" size={17} color={theme.inkSoft} /></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('journal.deleteA11y')} hitSlop={8} onPress={() => setPendingDeleteId(entry.id)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="trash-outline" size={17} color={theme.danger} /></Pressable>
+      </View>
+      {pendingDeleteId === entry.id ? <View style={{ flexDirection: rowDirection(locale), alignItems: 'center', gap: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: theme.border }}>
+        <Text style={{ color: theme.inkSoft, fontFamily: fonts.sansMedium, fontSize: 11, flex: 1, textAlign: textAlignment(locale) }}>{t('journal.deleteQuestion')}</Text>
+        <Pressable accessibilityRole="button" onPress={() => setPendingDeleteId(null)} style={{ paddingHorizontal: spacing.md, paddingVertical: 8 }}><Text style={{ color: theme.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 11 }}>{t('common.cancel')}</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('journal.deleteConfirmA11y')} onPress={() => confirmDelete(entry.id)} style={{ paddingHorizontal: spacing.md, paddingVertical: 8, borderRadius: radius.pill, backgroundColor: theme.danger }}><Text style={{ color: '#FFFFFF', fontFamily: fonts.sansBold, fontSize: 11 }}>{t('common.delete')}</Text></Pressable>
+      </View> : null}
+    </View>)}</View>}
   </Screen>;
 }

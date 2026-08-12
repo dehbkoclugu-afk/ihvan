@@ -14,16 +14,25 @@ test('normalizes persisted onboarding and display preferences', () => {
     name: '  Umut   Can  ',
     themePreference: 'unknown',
     quranTextSize: 'large',
+    language: 'system',
   }), {
     onboarded: false,
     name: 'Umut Can',
     themePreference: 'system',
     quranTextSize: 'large',
+    language: 'system',
   });
   assert.deepEqual(normalizeUserPreferences(null), {
     onboarded: false,
     name: '',
     themePreference: 'system',
     quranTextSize: 'medium',
+    language: 'system',
   });
+});
+
+test('normalizes missing and invalid application language to system', () => {
+  assert.equal(normalizeUserPreferences({}).language, 'system');
+  assert.equal(normalizeUserPreferences({ language: 'de' }).language, 'system');
+  assert.equal(normalizeUserPreferences({ language: 'ar' }).language, 'ar');
 });

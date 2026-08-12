@@ -3,6 +3,7 @@ export interface UserPreferences {
   name: string;
   themePreference: 'dawn' | 'vigil' | 'system';
   quranTextSize: 'small' | 'medium' | 'large';
+  language: 'system' | 'tr' | 'en' | 'ar';
 }
 
 export function normalizeUserName(value: unknown, maxLength = 50): string {
@@ -21,10 +22,14 @@ export function normalizeUserPreferences(value: unknown): UserPreferences {
   const quranTextSize = candidate.quranTextSize === 'small' || candidate.quranTextSize === 'large'
     ? candidate.quranTextSize
     : 'medium';
+  const language = candidate.language === 'tr' || candidate.language === 'en' || candidate.language === 'ar'
+    ? candidate.language
+    : 'system';
   return {
     onboarded: candidate.onboarded === true,
     name: normalizeUserName(candidate.name),
     themePreference,
     quranTextSize,
+    language,
   };
 }

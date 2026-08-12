@@ -2,14 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { compassTurn, prayerDay } from '@/services/prayerTimes';
 import { useTheme } from '@/hooks/useTheme';
+import { formatLocaleNumber, useT } from '@/i18n';
+import { textAlignment } from '@/i18n/direction';
+import { compassTurn, prayerDay } from '@/services/prayerTimes';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
 import type { PrayerLocation } from '@/hooks/usePrayerLocation';
 
 export function QiblaCard({ location }: { location: PrayerLocation }) {
-  const t = useTheme();
+  const theme = useTheme();
+  const { locale, t } = useT();
   const qibla = prayerDay(location.latitude, location.longitude).qibla;
   const [heading, setHeading] = useState<number | null>(null);
   const [live, setLive] = useState(false);
@@ -36,15 +39,15 @@ export function QiblaCard({ location }: { location: PrayerLocation }) {
 
   const turn = heading === null ? qibla : compassTurn(qibla, heading);
 
-  return <View style={{ backgroundColor: t.duskFrom, borderRadius: radius.card, padding: spacing.xl, alignItems: 'center' }}>
-    <Text style={{ color: '#B6E3D4', fontFamily: fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.3 }}>KIBLE</Text>
+  return <View style={{ backgroundColor: theme.duskFrom, borderRadius: radius.card, padding: spacing.xl, alignItems: 'center' }}>
+    <Text style={{ color: '#B6E3D4', fontFamily: fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.3 }}>{t('worship.qibla')}</Text>
     <View style={{ width: 142, height: 142, borderRadius: 71, borderWidth: 1, borderColor: 'rgba(255,255,255,0.20)', alignItems: 'center', justifyContent: 'center', marginTop: spacing.md }}>
-      <Text style={{ color: 'rgba(255,255,255,0.45)', position: 'absolute', top: 8, fontFamily: fonts.sansBold, fontSize: 11 }}>K</Text>
+      <Text style={{ color: 'rgba(255,255,255,0.45)', position: 'absolute', top: 8, fontFamily: fonts.sansBold, fontSize: 11 }}>{t('worship.northShort')}</Text>
       <View style={{ transform: [{ rotate: `${turn}deg` }] }}><Ionicons name="navigate" size={58} color="#B6E3D4" /></View>
     </View>
-    <Text style={{ color: '#F6F2E9', fontFamily: fonts.serif, fontSize: 26, marginTop: spacing.md }}>{Math.round(qibla)}°</Text>
-    <Text style={{ color: 'rgba(246,242,233,0.65)', fontFamily: fonts.sans, fontSize: 11, textAlign: 'center', lineHeight: 17, marginTop: 3 }}>{heading === null ? 'Kuzeye göre kıble açısı' : 'Canlı pusula · telefonu düz tut'}</Text>
-    <Pressable accessibilityRole="switch" accessibilityState={{ checked: live }} accessibilityLabel="Canlı kıble pusulası" onPress={() => { setError(false); setLive((value) => !value); }} style={{ marginTop: spacing.md, paddingHorizontal: spacing.lg, paddingVertical: 9, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.10)' }}><Text style={{ color: '#F6F2E9', fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{live ? 'Pusulayı durdur' : 'Canlı pusulayı aç'}</Text></Pressable>
-    {error ? <Text accessibilityRole="alert" style={{ color: '#F1B6A8', fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.sm }}>Pusula sensörü okunamadı.</Text> : null}
+    <Text style={{ color: '#F6F2E9', fontFamily: fonts.serif, fontSize: 26, marginTop: spacing.md }}>{formatLocaleNumber(Math.round(qibla))}°</Text>
+    <Text style={{ color: 'rgba(246,242,233,0.65)', fontFamily: fonts.sans, fontSize: 11, textAlign: 'center', lineHeight: 17, marginTop: 3 }}>{heading === null ? t('worship.qiblaFromNorth', { degrees: formatLocaleNumber(Math.round(qibla)) }) : t('worship.liveCompassHint')}</Text>
+    <Pressable accessibilityRole="switch" accessibilityState={{ checked: live }} accessibilityLabel={t('a11y.liveQibla')} onPress={() => { setError(false); setLive((value) => !value); }} style={{ minHeight: 44, marginTop: spacing.md, paddingHorizontal: spacing.lg, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.10)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#F6F2E9', fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{t(live ? 'worship.stopCompass' : 'worship.openCompass')}</Text></Pressable>
+    {error ? <Text accessibilityRole="alert" style={{ color: '#F1B6A8', fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.sm, textAlign: textAlignment(locale) }}>{t('worship.compassError')}</Text> : null}
   </View>;
 }
