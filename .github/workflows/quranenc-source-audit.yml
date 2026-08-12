@@ -1,0 +1,41 @@
+name: QuranEnc source audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/quranenc-source-audit.yml"
+      - "vendor/quranenc/**"
+      - "scripts/build-quran-meals.mjs"
+      - "src/data/quranMeals.generated.ts"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fetch-official-sources:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download official QuranEnc SQLite snapshots
+        run: |
+          set -euo pipefail
+          mkdir -p quranenc-official
+          curl --fail --location --retry 3 --output quranenc-official/turkish_rwwad-v1.0.4.sqlite https://quranenc.com/downloads/sqlite/turkish_rwwad.sqlite
+          curl --fail --location --retry 3 --output quranenc-official/english_rwwad-v1.0.19.sqlite https://quranenc.com/downloads/sqlite/english_rwwad.sqlite
+          sha256sum quranenc-official/*.sqlite | tee quranenc-official/SHA256SUMS
+
+      - name: Inspect source databases
+        run: |
+          set -euo pipefail
+          for database in quranenc-official/*.sqlite; do
+            echo "$database"
+            sqlite3 "$database" ".tables"
+          done
+
+      - name: Upload immutable source snapshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: quranenc-official-sqlite
+          path: quranenc-official/
+          if-no-files-found: error
+          retention-days: 3
