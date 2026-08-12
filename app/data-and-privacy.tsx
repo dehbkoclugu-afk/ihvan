@@ -20,6 +20,7 @@ const sections: { icon: ComponentProps<typeof Ionicons>['name']; title: Translat
   { icon: 'notifications-outline', title: 'data.notificationsTitle', body: 'data.notificationsBody' },
   { icon: 'card-outline', title: 'data.plusTitle', body: 'data.plusBody' },
   { icon: 'book-outline', title: 'data.quranSourceTitle', body: 'data.quranSourceBody' },
+  { icon: 'language-outline', title: 'data.mealSourceTitle', body: 'data.mealSourceBody' },
 ];
 
 export default function DataAndPrivacy() {

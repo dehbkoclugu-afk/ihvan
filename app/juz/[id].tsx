@@ -4,6 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 import { QuranTextSizeControl } from '@/components/QuranTextSizeControl';
 import { Screen } from '@/components/Screen';
 import { QURAN_JUZS, QURAN_SURAHS, getJuzAyahs } from '@/data/quran';
+import { getQuranMealAyah, getQuranMealSource } from '@/data/quranMeals';
 import { useTheme } from '@/hooks/useTheme';
 import { useT } from '@/i18n';
 import { getDirectionalIconName, rowDirection, textAlignment } from '@/i18n/direction';
@@ -22,6 +23,8 @@ export default function JuzDetail() {
   const juzId = Number(id);
   const juz = QURAN_JUZS.find((item) => item.id === juzId);
   const metrics = QURAN_TEXT_METRICS[useUserStore((state) => state.quranTextSize)];
+  const quranMeal = useUserStore((state) => state.quranMeal);
+  const mealSource = getQuranMealSource(quranMeal);
   const { lastRead, bookmarks, readingDays, readAyahs, markAyahRead, toggleBookmark } = useQuranProgressStore();
   if (!juz) return <Screen><Text style={{ color: theme.ink, textAlign: textAlignment(locale) }}>{t('reader.juzNotFound')}</Text></Screen>;
   const ayahs = getJuzAyahs(juzId);
@@ -47,6 +50,7 @@ export default function JuzDetail() {
       const bookmarked = bookmarks.includes(key);
       const read = readKeys.has(key);
       const isLastRead = lastRead?.surah === ayah.surah && lastRead.ayah === ayah.ayah;
+      const meal = getQuranMealAyah(ayah.surah, ayah.ayah, quranMeal);
       return <View key={key}>
         {startsSurah ? <View style={{ alignItems: 'center', paddingTop: spacing.xl, paddingBottom: spacing.sm }}><Text style={{ color: theme.ink, fontSize: 28, writingDirection: 'rtl', textAlign: 'right' }}>{surah.arabicName}</Text><Text style={{ color: theme.inkSoft, fontFamily: fonts.sansSemiBold, marginTop: 4 }}>{surah.transliteration} · {surah.id}</Text></View> : null}
         <View style={{ paddingVertical: spacing.xl, borderBottomWidth: 1, borderBottomColor: theme.border }}>
@@ -57,6 +61,7 @@ export default function JuzDetail() {
             <Pressable accessibilityRole="button" accessibilityState={{ selected: read }} accessibilityLabel={t('reader.markReadA11y', { reference: key })} hitSlop={8} onPress={() => { selectionFeedback(); markAyahRead(ayah.surah, ayah.ayah); }} style={{ marginStart: spacing.sm, minHeight: 38, paddingHorizontal: spacing.md, borderRadius: radius.pill, flexDirection: direction, gap: 5, alignItems: 'center', backgroundColor: isLastRead ? theme.gold : read ? theme.goldSoft : theme.surface }}><Ionicons name={read ? 'checkmark' : 'checkmark-outline'} size={15} color={isLastRead ? theme.onGold : read ? theme.gold : theme.inkSoft} /><Text style={{ color: isLastRead ? theme.onGold : read ? theme.gold : theme.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10 }}>{t(isLastRead ? 'reader.lastPosition' : read ? 'reader.read' : 'reader.markRead')}</Text></Pressable>
           </View>
           <Text selectable style={{ color: theme.ink, fontSize: metrics.fontSize, lineHeight: metrics.lineHeight, textAlign: 'right', writingDirection: 'rtl', marginTop: spacing.md }}>{ayah.text}</Text>
+          {meal ? <View style={{ backgroundColor: theme.surface, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.lg }}><Text style={{ color: theme.gold, fontFamily: fonts.sansSemiBold, fontSize: 10, letterSpacing: 0.8, textAlign: 'left', writingDirection: 'ltr' }}>{t('reader.meal')}</Text><Text selectable style={{ color: theme.inkSoft, fontFamily: fonts.sans, fontSize: 15, lineHeight: 24, marginTop: spacing.xs, textAlign: 'left', writingDirection: 'ltr' }}>{meal.text}</Text>{meal.footnotes ? <Text selectable style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 12, lineHeight: 19, marginTop: spacing.sm, textAlign: 'left', writingDirection: 'ltr' }}>{meal.footnotes}</Text> : null}</View> : null}
         </View>
       </View>;
     })}
@@ -64,6 +69,7 @@ export default function JuzDetail() {
       {previousJuz ? <Pressable accessibilityRole="button" accessibilityLabel={t('reader.previousJuzA11y', { number: previousJuz.id })} onPress={() => router.push({ pathname: '/juz/[id]', params: { id: `${previousJuz.id}` } })} style={({ pressed }) => ({ flex: 1, minHeight: 58, paddingHorizontal: spacing.md, borderRadius: radius.inner, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}><View style={{ flexDirection: direction, alignItems: 'center', gap: spacing.xs }}><Ionicons name={getDirectionalIconName('chevron-back', locale)} size={18} color={theme.gold} /><View style={{ flex: 1 }}><Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 10, textAlign: align }}>{t('reader.previousJuz')}</Text><Text style={{ color: theme.ink, fontFamily: fonts.sansSemiBold, fontSize: 12, marginTop: 2, textAlign: align }}>{t('quran.juzTitle', { number: previousJuz.id })}</Text></View></View></Pressable> : <View style={{ flex: 1 }} />}
       {nextJuz ? <Pressable accessibilityRole="button" accessibilityLabel={t('reader.nextJuzA11y', { number: nextJuz.id })} onPress={() => router.push({ pathname: '/juz/[id]', params: { id: `${nextJuz.id}` } })} style={({ pressed }) => ({ flex: 1, minHeight: 58, paddingHorizontal: spacing.md, borderRadius: radius.inner, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}><View style={{ flexDirection: direction, alignItems: 'center', gap: spacing.xs }}><View style={{ flex: 1 }}><Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 10, textAlign: align }}>{t('reader.nextJuz')}</Text><Text style={{ color: theme.ink, fontFamily: fonts.sansSemiBold, fontSize: 12, marginTop: 2, textAlign: align }}>{t('quran.juzTitle', { number: nextJuz.id })}</Text></View><Ionicons name={getDirectionalIconName('chevron-forward', locale)} size={18} color={theme.gold} /></View></Pressable> : <View style={{ flex: 1 }} />}
     </View>
-    <Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, textAlign: 'center', marginVertical: spacing.xl }}>{t('reader.juzAttribution')}</Text>
+    <Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, textAlign: 'center', marginVertical: mealSource ? spacing.sm : spacing.xl }}>{t('reader.juzAttribution', { juz: juz.id })}</Text>
+    {mealSource ? <Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, textAlign: 'center', marginBottom: spacing.xl }}>{t('reader.mealAttribution', { source: mealSource.name, version: mealSource.version ?? '' })}</Text> : null}
   </Screen>;
 }

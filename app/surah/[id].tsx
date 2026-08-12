@@ -5,6 +5,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { QuranTextSizeControl } from '@/components/QuranTextSizeControl';
 import { Screen } from '@/components/Screen';
 import { QURAN_SURAHS, getSurahAyahs } from '@/data/quran';
+import { getQuranMealAyah, getQuranMealSource } from '@/data/quranMeals';
 import { useTheme } from '@/hooks/useTheme';
 import { useT } from '@/i18n';
 import { getDirectionalIconName, rowDirection, textAlignment } from '@/i18n/direction';
@@ -28,6 +29,8 @@ export default function SurahDetail() {
   const ayahOffsets = useRef<Record<number, number>>({});
   const [jumpInput, setJumpInput] = useState('');
   const metrics = QURAN_TEXT_METRICS[useUserStore((state) => state.quranTextSize)];
+  const quranMeal = useUserStore((state) => state.quranMeal);
+  const mealSource = getQuranMealSource(quranMeal);
   const { lastRead, bookmarks, readingDays, readAyahs, markAyahRead, toggleBookmark } = useQuranProgressStore();
   if (!surah) return <Screen><Text style={{ color: theme.ink, textAlign: textAlignment(locale) }}>{t('reader.surahNotFound')}</Text></Screen>;
   const ayahs = getSurahAyahs(surahId);
@@ -58,6 +61,7 @@ export default function SurahDetail() {
       const bookmarked = bookmarks.includes(key);
       const read = readKeys.has(key);
       const isLastRead = lastRead?.surah === ayah.surah && lastRead.ayah === ayah.ayah;
+      const meal = getQuranMealAyah(ayah.surah, ayah.ayah, quranMeal);
       return <View key={key} onLayout={(event) => {
         ayahOffsets.current[ayah.ayah] = event.nativeEvent.layout.y;
         if (!didScroll.current && targetAyah === ayah.ayah) {
@@ -73,12 +77,14 @@ export default function SurahDetail() {
           <Pressable accessibilityRole="button" accessibilityState={{ selected: read }} accessibilityLabel={t('reader.markReadA11y', { reference: key })} hitSlop={8} onPress={() => { selectionFeedback(); markAyahRead(ayah.surah, ayah.ayah); }} style={{ marginStart: spacing.sm, minHeight: 38, paddingHorizontal: spacing.md, borderRadius: radius.pill, flexDirection: direction, gap: 5, alignItems: 'center', backgroundColor: isLastRead ? theme.gold : read ? theme.goldSoft : theme.surface }}><Ionicons name={read ? 'checkmark' : 'checkmark-outline'} size={15} color={isLastRead ? theme.onGold : read ? theme.gold : theme.inkSoft} /><Text style={{ color: isLastRead ? theme.onGold : read ? theme.gold : theme.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10 }}>{t(isLastRead ? 'reader.lastPosition' : read ? 'reader.read' : 'reader.markRead')}</Text></Pressable>
         </View>
         <Text selectable style={{ color: theme.ink, fontSize: metrics.fontSize, lineHeight: metrics.lineHeight, textAlign: 'right', writingDirection: 'rtl', marginTop: spacing.md }}>{ayah.text}</Text>
+        {meal ? <View style={{ backgroundColor: theme.surface, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.lg }}><Text style={{ color: theme.gold, fontFamily: fonts.sansSemiBold, fontSize: 10, letterSpacing: 0.8, textAlign: 'left', writingDirection: 'ltr' }}>{t('reader.meal')}</Text><Text selectable style={{ color: theme.inkSoft, fontFamily: fonts.sans, fontSize: 15, lineHeight: 24, marginTop: spacing.xs, textAlign: 'left', writingDirection: 'ltr' }}>{meal.text}</Text>{meal.footnotes ? <Text selectable style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 12, lineHeight: 19, marginTop: spacing.sm, textAlign: 'left', writingDirection: 'ltr' }}>{meal.footnotes}</Text> : null}</View> : null}
       </View>;
     })}
     <View style={{ flexDirection: direction, gap: spacing.sm, marginTop: spacing.xl }}>
       {previousSurah ? <Pressable accessibilityRole="button" accessibilityLabel={t('reader.previousSurahA11y', { surah: previousSurah.transliteration })} onPress={() => router.push({ pathname: '/surah/[id]', params: { id: `${previousSurah.id}` } })} style={({ pressed }) => ({ flex: 1, minHeight: 58, paddingHorizontal: spacing.md, borderRadius: radius.inner, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}><View style={{ flexDirection: direction, alignItems: 'center', gap: spacing.xs }}><Ionicons name={getDirectionalIconName('chevron-back', locale)} size={18} color={theme.gold} /><View style={{ flex: 1 }}><Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 10, textAlign: align }}>{t('reader.previousSurah')}</Text><Text numberOfLines={1} style={{ color: theme.ink, fontFamily: fonts.sansSemiBold, fontSize: 12, marginTop: 2, textAlign: align }}>{previousSurah.transliteration}</Text></View></View></Pressable> : <View style={{ flex: 1 }} />}
       {nextSurah ? <Pressable accessibilityRole="button" accessibilityLabel={t('reader.nextSurahA11y', { surah: nextSurah.transliteration })} onPress={() => router.push({ pathname: '/surah/[id]', params: { id: `${nextSurah.id}` } })} style={({ pressed }) => ({ flex: 1, minHeight: 58, paddingHorizontal: spacing.md, borderRadius: radius.inner, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, justifyContent: 'center', opacity: pressed ? 0.7 : 1 })}><View style={{ flexDirection: direction, alignItems: 'center', gap: spacing.xs }}><View style={{ flex: 1 }}><Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 10, textAlign: align }}>{t('reader.nextSurah')}</Text><Text numberOfLines={1} style={{ color: theme.ink, fontFamily: fonts.sansSemiBold, fontSize: 12, marginTop: 2, textAlign: align }}>{nextSurah.transliteration}</Text></View><Ionicons name={getDirectionalIconName('chevron-forward', locale)} size={18} color={theme.gold} /></View></Pressable> : <View style={{ flex: 1 }} />}
     </View>
-    <Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, textAlign: 'center', marginVertical: spacing.xl }}>{t('reader.surahAttribution')}</Text>
+    <Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, textAlign: 'center', marginVertical: mealSource ? spacing.sm : spacing.xl }}>{t('reader.surahAttribution', { surah: surah.transliteration })}</Text>
+    {mealSource ? <Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, textAlign: 'center', marginBottom: spacing.xl }}>{t('reader.mealAttribution', { source: mealSource.name, version: mealSource.version ?? '' })}</Text> : null}
   </Screen>;
 }

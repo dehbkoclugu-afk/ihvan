@@ -4,7 +4,7 @@ import { buildUserDataExport, serializeUserDataExport, userDataExportFileName } 
 
 test('buildUserDataExport exports personal progress without bundled Quran text', () => {
   const result = buildUserDataExport({
-    profile: { name: 'Umut', themePreference: 'dawn', quranTextSize: 'medium', language: 'tr' },
+    profile: { name: 'Umut', themePreference: 'dawn', quranTextSize: 'medium', language: 'tr', quranMeal: 'en' },
     prayerTracking: { completions: { '2026-08-08': ['fajr'] } },
     quranProgress: {
       lastRead: { surah: 2, ayah: 255, updatedAt: '2026-08-08T06:00:00.000Z' },
@@ -25,6 +25,7 @@ test('buildUserDataExport exports personal progress without bundled Quran text',
   assert.deepEqual(result.quranProgress.bookmarks, ['2:255']);
   assert.deepEqual(result.dhikr.history, { '2026-08-08': 12 });
   assert.equal(result.profile.language, 'tr');
+  assert.equal(result.profile.quranMeal, 'en');
   assert.equal('quranText' in result, false);
   assert.equal(JSON.stringify(result).includes('arabicText'), false);
   assert.equal(userDataExportFileName(new Date('2026-08-08T10:11:12.345Z')), 'ihvan-verilerim-2026-08-08T10-11-12-345Z.json');

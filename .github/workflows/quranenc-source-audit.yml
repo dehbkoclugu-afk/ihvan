@@ -16,6 +16,8 @@ jobs:
   fetch-official-sources:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download official QuranEnc SQLite snapshots
         run: |
           set -euo pipefail
@@ -24,6 +26,14 @@ jobs:
           curl --fail --location --retry 3 --output quranenc-official/english_rwwad-v1.0.19.sqlite https://quranenc.com/downloads/sqlite/english_rwwad.sqlite
           sha256sum quranenc-official/*.sqlite | tee quranenc-official/SHA256SUMS
 
+      - name: Verify reviewed source fingerprints
+        run: |
+          set -euo pipefail
+          echo '577ab9743a9cfae3235bc2393ed85cf3133c39c29bb32d16c7dc733a4d68d89e  quranenc-official/turkish_rwwad-v1.0.4.sqlite' | sha256sum --check
+          echo '77e2ede3d8e6d6b5c6e16ff78eda2d2b6cc0a6b7489c94a5dde4f7481f5fdee8  quranenc-official/english_rwwad-v1.0.19.sqlite' | sha256sum --check
+          cmp quranenc-official/turkish_rwwad-v1.0.4.sqlite vendor/quranenc/turkish_rwwad-v1.0.4.sqlite
+          cmp quranenc-official/english_rwwad-v1.0.19.sqlite vendor/quranenc/english_rwwad-v1.0.19.sqlite
+
       - name: Inspect source databases
         run: |
           set -euo pipefail
@@ -31,6 +41,15 @@ jobs:
             echo "$database"
             sqlite3 "$database" ".tables"
           done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify generated meal data is current
+        run: |
+          npm run build:quran-meals
+          git diff --exit-code -- src/data/quranMeals.generated.ts
 
       - name: Upload immutable source snapshots
         uses: actions/upload-artifact@v4

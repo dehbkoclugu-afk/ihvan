@@ -1,9 +1,12 @@
+import { normalizeQuranMealPreference, type QuranMealPreference } from './quranDisplay.ts';
+
 export interface UserPreferences {
   onboarded: boolean;
   name: string;
   themePreference: 'dawn' | 'vigil' | 'system';
   quranTextSize: 'small' | 'medium' | 'large';
   language: 'system' | 'tr' | 'en' | 'ar';
+  quranMeal: QuranMealPreference;
 }
 
 export function normalizeUserName(value: unknown, maxLength = 50): string {
@@ -31,5 +34,6 @@ export function normalizeUserPreferences(value: unknown): UserPreferences {
     themePreference,
     quranTextSize,
     language,
+    quranMeal: normalizeQuranMealPreference(candidate.quranMeal),
   };
 }

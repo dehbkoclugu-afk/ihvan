@@ -4,6 +4,7 @@ export interface UserDataExportInput {
     themePreference: string;
     quranTextSize: string;
     language: string;
+    quranMeal: string;
   };
   prayerTracking: { completions: Record<string, string[]> };
   quranProgress: {

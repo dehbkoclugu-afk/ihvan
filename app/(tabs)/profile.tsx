@@ -21,7 +21,7 @@ import { normalizeUserName } from '@/lib/userProfile';
 import { openSubscriptionManagement } from '@/services/purchases';
 import { shareUserDataExport } from '@/services/userDataExport';
 import { activeStreakCount } from '@/lib/dates';
-import type { QuranTextSize } from '@/lib/quranDisplay';
+import type { QuranMealPreference, QuranTextSize } from '@/lib/quranDisplay';
 import { fonts } from '@/theme/typography';
 import { radius, spacing, type ThemeName } from '@/theme/tokens';
 
@@ -41,6 +41,8 @@ export default function Profile() {
   const setPref = useUserStore((s) => s.setThemePreference);
   const quranTextSize = useUserStore((s) => s.quranTextSize);
   const setQuranTextSize = useUserStore((s) => s.setQuranTextSize);
+  const quranMeal = useUserStore((s) => s.quranMeal);
+  const setQuranMeal = useUserStore((s) => s.setQuranMeal);
   const prayerCompletions = usePrayerTrackingStore((s) => s.completions);
   const prayerWeek = prayerCompletionPercent(prayerCompletions);
   const quranReadingDays = useQuranProgressStore((s) => s.readingDays);
@@ -49,6 +51,7 @@ export default function Profile() {
   const quranStreak = quranReadingStreak(quranReadingDays);
   const options: { id: ThemeName | 'system'; label: string }[] = [{ id: 'system', label: copy('appearance.system') }, { id: 'dawn', label: copy('appearance.dawn') }, { id: 'vigil', label: copy('appearance.vigil') }];
   const quranSizes: { id: QuranTextSize; label: string }[] = [{ id: 'small', label: copy('appearance.quranSmall') }, { id: 'medium', label: copy('appearance.quranMedium') }, { id: 'large', label: copy('appearance.quranLarge') }];
+  const quranMeals: { id: QuranMealPreference; label: string }[] = [{ id: 'none', label: copy('profile.quranMealNone') }, { id: 'tr', label: copy('profile.quranMealTurkish') }, { id: 'en', label: copy('profile.quranMealEnglish') }];
 
   useEffect(() => { setNameDraft(name); }, [name]);
 
@@ -70,7 +73,7 @@ export default function Profile() {
     const ritual = useStreakStore.getState();
     const prayerSettings = usePrayerSettingsStore.getState();
     const snapshot = buildUserDataExport({
-      profile: { name: user.name, themePreference: user.themePreference, quranTextSize: user.quranTextSize, language: user.language },
+      profile: { name: user.name, themePreference: user.themePreference, quranTextSize: user.quranTextSize, language: user.language, quranMeal: user.quranMeal },
       prayerTracking: { completions: prayer.completions },
       quranProgress: { lastRead: quran.lastRead, bookmarks: quran.bookmarks, readingDays: quran.readingDays, readAyahs: quran.readAyahs, readingGoal: quran.readingGoal },
       journal: { entries: journal.entries },
@@ -103,6 +106,9 @@ export default function Profile() {
     <View accessibilityRole="radiogroup" style={{ flexDirection: rowDirection(locale), gap: spacing.sm, marginTop: spacing.md }}>{options.map((option) => <Pressable key={option.id} accessibilityRole="radio" accessibilityState={{ selected: pref === option.id }} onPress={() => setPref(option.id)} style={{ flex: 1, paddingVertical: 11, borderRadius: radius.pill, alignItems: 'center', backgroundColor: pref === option.id ? t.gold : t.surface }}><Text style={{ color: pref === option.id ? t.onGold : t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{option.label}</Text></Pressable>)}</View>
     <Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 18, marginTop: spacing.xxl, textAlign: textAlignment(locale) }}>{copy('profile.quranSize')}</Text>
     <View accessibilityRole="radiogroup" style={{ flexDirection: rowDirection(locale), gap: spacing.sm, marginTop: spacing.md }}>{quranSizes.map((option) => <Pressable key={option.id} accessibilityRole="radio" accessibilityState={{ selected: quranTextSize === option.id }} onPress={() => setQuranTextSize(option.id)} style={{ flex: 1, paddingVertical: 11, borderRadius: radius.pill, alignItems: 'center', backgroundColor: quranTextSize === option.id ? t.gold : t.surface }}><Text style={{ color: quranTextSize === option.id ? t.onGold : t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{option.label}</Text></Pressable>)}</View>
+    <Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 18, marginTop: spacing.xxl, textAlign: textAlignment(locale) }}>{copy('profile.quranMeal')}</Text>
+    <View accessibilityRole="radiogroup" style={{ flexDirection: rowDirection(locale), gap: spacing.sm, marginTop: spacing.md }}>{quranMeals.map((option) => <Pressable key={option.id} accessibilityRole="radio" accessibilityState={{ selected: quranMeal === option.id }} onPress={() => setQuranMeal(option.id)} style={{ flex: 1, minHeight: 44, paddingHorizontal: spacing.xs, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: quranMeal === option.id ? t.gold : t.surface }}><Text numberOfLines={1} style={{ color: quranMeal === option.id ? t.onGold : t.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{option.label}</Text></Pressable>)}</View>
+    <Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, marginTop: spacing.sm, textAlign: textAlignment(locale) }}>{copy('profile.quranMealNote')}</Text>
     <Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 18, marginTop: spacing.xxl, textAlign: textAlignment(locale) }}>{copy('profile.data')}</Text>
     <View style={{ marginTop: spacing.md, backgroundColor: t.surface, borderRadius: radius.inner, overflow: 'hidden' }}>
       <Pressable accessibilityRole="button" accessibilityState={{ disabled: exportingData }} disabled={exportingData} onPress={() => void exportPersonalData()} style={({ pressed }) => ({ flexDirection: rowDirection(locale), alignItems: 'center', gap: spacing.md, padding: spacing.lg, opacity: exportingData ? 0.5 : pressed ? 0.7 : 1 })}><Ionicons name="share-outline" size={20} color={t.gold} /><View style={{ flex: 1 }}><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 14, textAlign: textAlignment(locale) }}>{exportingData ? copy('data.exporting') : copy('profile.export')}</Text><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: 2, textAlign: textAlignment(locale) }}>{copy('data.onDevice')}</Text></View><Ionicons name={getDirectionalIconName('chevron-forward', locale)} size={18} color={t.inkFaint} /></Pressable>
