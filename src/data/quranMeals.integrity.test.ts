@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { SACRED_SOURCES } from './contentPolicy.ts';
-import { getQuranMealAyah, getQuranMealSource, QURAN_MEAL_METADATA } from './quranMeals.ts';
+import { getQuranMealAyah, getQuranMealSource, QURAN_MEAL_METADATA, searchQuranMeals } from './quranMeals.ts';
 import { QURAN_MEAL_EN, QURAN_MEAL_TR } from './quranMeals.generated.ts';
 import { normalizeQuranMealPreference } from '../lib/quranDisplay.ts';
 
@@ -39,6 +39,14 @@ test('activates only human-authored, attributed translation sources', () => {
     assert.ok(source?.version);
   }
   assert.equal(SACRED_SOURCES.some((source) => source.kind === 'translation' && source.status === 'pending-license'), false);
+});
+
+test('searches the selected human-authored meal without changing its text', () => {
+  const result = searchQuranMeals('merhamet', 'tr', 5);
+  assert.ok(result.length > 0 && result.length <= 5);
+  assert.ok(result.every((item) => getQuranMealAyah(item.surah, item.ayah, 'tr')?.text === item.text));
+  assert.deepEqual(searchQuranMeals('merhamet', 'none'), []);
+  assert.deepEqual(searchQuranMeals('a', 'tr'), []);
 });
 
 test('normalizes persisted meal preferences independently', () => {

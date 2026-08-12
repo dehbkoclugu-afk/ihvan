@@ -6,11 +6,13 @@ import { ArtSlot } from '@/components/ArtSlot';
 import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { QURAN_AYAHS, QURAN_JUZS, QURAN_SURAHS, getAyah, mushafPositionPercent } from '@/data/quran';
+import { searchQuranMeals } from '@/data/quranMeals';
 import { useTheme } from '@/hooks/useTheme';
 import { formatLocaleNumber, useT } from '@/i18n';
 import { getDirectionalIconName, rowDirection, textAlignment } from '@/i18n/direction';
 import { quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranSectionReadCounts, quranSurahReadCounts, type QuranProgressFilter, type QuranReadingGoal } from '@/lib/quranHabit';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
+import { useUserStore } from '@/state/useUserStore';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
 
@@ -27,6 +29,7 @@ export default function Quran() {
   const [query, setQuery] = useState('');
   const [browseMode, setBrowseMode] = useState<'surahs' | 'juzs'>('surahs');
   const [progressFilter, setProgressFilter] = useState<QuranProgressFilter>('all');
+  const quranMeal = useUserStore((state) => state.quranMeal);
   const { lastRead, bookmarks, readingDays, readAyahs, readingGoal, setReadingGoal } = useQuranProgressStore();
   const readToday = quranReadCount(readingDays);
   const goalPercent = quranGoalPercent(readToday, readingGoal);
@@ -38,6 +41,7 @@ export default function Quran() {
   const nextUnread = nextUnreadKey ? getAyah(...nextUnreadKey.split(':').map(Number) as [number, number]) : undefined;
   const verseMatch = query.trim().match(/^(\d{1,3})\s*:\s*(\d{1,3})$/);
   const directAyah = verseMatch ? getAyah(Number(verseMatch[1]), Number(verseMatch[2])) : undefined;
+  const mealResults = useMemo(() => verseMatch ? [] : searchQuranMeals(query, quranMeal, 20), [query, quranMeal, verseMatch]);
   const bookmarkAyahs = useMemo(() => bookmarks.slice(0, 5).map((key) => {
     const [surah, ayah] = key.split(':').map(Number);
     return getAyah(surah, ayah);
@@ -96,6 +100,10 @@ export default function Quran() {
       {query ? <Pressable accessibilityRole="button" accessibilityLabel={t('common.clearSearch')} onPress={() => setQuery('')} hitSlop={8}><Ionicons name="close-circle" size={18} color={theme.inkFaint} /></Pressable> : null}
     </View>
     {directAyah ? <Pressable accessibilityRole="button" accessibilityLabel={t('quran.goToAyah', { reference: `${directAyah.surah}:${directAyah.ayah}` })} onPress={() => openAyah(directAyah.surah, directAyah.ayah)} style={{ marginTop: spacing.sm, backgroundColor: theme.goldSoft, borderRadius: radius.inner, padding: spacing.md, flexDirection: direction, gap: spacing.sm, alignItems: 'center' }}><Ionicons name="return-down-forward" size={18} color={theme.gold} /><Text style={{ color: theme.ink, fontFamily: fonts.sansSemiBold, flex: 1, textAlign: align }}>{t('quran.goToAyah', { reference: `${directAyah.surah}:${directAyah.ayah}` })}</Text><Ionicons name={forward} size={17} color={theme.gold} /></Pressable> : null}
+    {mealResults.length ? <View style={{ gap: spacing.sm, marginTop: spacing.md }}>
+      <Text style={{ color: theme.ink, fontFamily: fonts.sansSemiBold, textAlign: align }}>{t('quran.mealResults', { count: mealResults.length })}</Text>
+      {mealResults.map((result) => <Pressable key={`${result.surah}:${result.ayah}`} accessibilityRole="button" accessibilityLabel={t('quran.goToMealResult', { reference: result.reference })} onPress={() => openAyah(result.surah, result.ayah)} style={{ backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: radius.inner, padding: spacing.md }}><Text style={{ color: theme.gold, fontFamily: fonts.sansSemiBold, fontSize: 11, textAlign: align }}>{result.reference}</Text><Text numberOfLines={3} style={{ color: theme.inkSoft, fontFamily: fonts.sans, fontSize: 13, lineHeight: 20, marginTop: spacing.xs, textAlign: align }}>{result.text}</Text></Pressable>)}
+    </View> : null}
     <View style={{ backgroundColor: theme.goldSoft, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.md }}><Text style={{ color: theme.inkSoft, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18, textAlign: align }}>{t('quran.sourcePolicy')}</Text></View>
 
     {bookmarkAyahs.length ? <><SectionHeader title={t('quran.bookmarks')} right={<Pressable accessibilityRole="button" accessibilityLabel={t('quran.viewAllBookmarks')} onPress={() => router.push('/bookmarks')}><Text style={{ color: theme.gold, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{t('quran.viewAllWithCount', { count: bookmarks.length })}</Text></Pressable>} /><View style={{ gap: spacing.sm }}>{bookmarkAyahs.map((ayah) => {
