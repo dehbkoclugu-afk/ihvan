@@ -11,6 +11,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { formatLocaleNumber, useT } from '@/i18n';
 import { getDirectionalIconName, rowDirection, textAlignment } from '@/i18n/direction';
 import { quranGoalPercent, quranNextUnreadKey, quranProgressFilterMatches, quranReadCount, quranReadingCoverage, quranReadingStreak, quranSectionReadCounts, quranSurahReadCounts, type QuranProgressFilter, type QuranReadingGoal } from '@/lib/quranHabit';
+import { QURAN_PLAN_DAYS, quranPlanSummary } from '@/lib/quranPlan';
 import { useQuranProgressStore } from '@/state/useQuranProgressStore';
 import { useUserStore } from '@/state/useUserStore';
 import { fonts } from '@/theme/typography';
@@ -30,11 +31,12 @@ export default function Quran() {
   const [browseMode, setBrowseMode] = useState<'surahs' | 'juzs'>('surahs');
   const [progressFilter, setProgressFilter] = useState<QuranProgressFilter>('all');
   const quranMeal = useUserStore((state) => state.quranMeal);
-  const { lastRead, bookmarks, readingDays, readAyahs, readingGoal, setReadingGoal } = useQuranProgressStore();
+  const { lastRead, bookmarks, readingDays, readAyahs, readingGoal, setReadingGoal, quranPlanDays, setQuranPlanDays } = useQuranProgressStore();
   const readToday = quranReadCount(readingDays);
   const goalPercent = quranGoalPercent(readToday, readingGoal);
   const readingStreak = quranReadingStreak(readingDays);
   const coverage = quranReadingCoverage(readAyahs, readingDays);
+  const hatimPlan = quranPlanSummary(coverage.read, coverage.total, quranPlanDays);
   const surahReadCounts = useMemo(() => quranSurahReadCounts(readAyahs, readingDays, QURAN_SURAH_AYAH_COUNTS), [readAyahs, readingDays]);
   const juzReadCounts = useMemo(() => quranSectionReadCounts(QURAN_AYAH_KEYS, readAyahs, readingDays, QURAN_JUZS), [readAyahs, readingDays]);
   const nextUnreadKey = quranNextUnreadKey(QURAN_AYAH_KEYS, readAyahs, readingDays, lastRead ? `${lastRead.surah}:${lastRead.ayah}` : undefined);
@@ -92,6 +94,13 @@ export default function Quran() {
       <View style={{ flexDirection: direction, alignItems: 'center', marginTop: spacing.xs, gap: spacing.xs }}><Ionicons name="book-outline" size={14} color={theme.gold} /><Text style={{ color: theme.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10 }}>{t('quran.uniqueAyahs', { read: formatLocaleNumber(coverage.read), total: formatLocaleNumber(coverage.total) })}</Text><Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 10, marginStart: 'auto' }}>{t('quran.coverage', { percent: coverage.percent })}</Text></View>
       {nextUnread ? <Pressable accessibilityRole="button" accessibilityLabel={t('quran.nextUnreadA11y', { reference: `${nextUnread.surah}:${nextUnread.ayah}` })} onPress={() => openAyah(nextUnread.surah, nextUnread.ayah)} style={({ pressed }) => ({ flexDirection: direction, alignItems: 'center', gap: spacing.sm, backgroundColor: theme.goldSoft, borderRadius: radius.inner, paddingHorizontal: spacing.md, minHeight: 44, marginTop: spacing.md, opacity: pressed ? 0.75 : 1 })}><Ionicons name="play-forward-outline" size={16} color={theme.gold} /><Text style={{ color: theme.ink, fontFamily: fonts.sansSemiBold, fontSize: 11, flex: 1, textAlign: align }}>{t('quran.nextUnread', { reference: `${nextUnread.surah}:${nextUnread.ayah}` })}</Text><Ionicons name={forward} size={15} color={theme.gold} /></Pressable> : <View style={{ backgroundColor: theme.goldSoft, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.md }}><Text style={{ color: theme.gold, fontFamily: fonts.sansSemiBold, fontSize: 11, textAlign: 'center' }}>{t('quran.allRead')}</Text></View>}
       <View accessibilityRole="radiogroup" style={{ flexDirection: direction, gap: spacing.sm, marginTop: spacing.md }}>{([5, 10, 20] as QuranReadingGoal[]).map((goal) => <Pressable key={goal} accessibilityRole="radio" accessibilityState={{ selected: readingGoal === goal }} onPress={() => setReadingGoal(goal)} style={{ flex: 1, borderRadius: radius.pill, minHeight: 36, alignItems: 'center', justifyContent: 'center', backgroundColor: readingGoal === goal ? theme.gold : theme.surfaceAlt }}><Text style={{ color: readingGoal === goal ? theme.onGold : theme.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 11 }}>{t('quran.goalOption', { count: goal })}</Text></Pressable>)}</View>
+    </View>
+
+    <View style={{ backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: radius.card, padding: spacing.lg, marginTop: spacing.lg }}>
+      <View style={{ flexDirection: direction, alignItems: 'center', gap: spacing.md }}><Ionicons name="calendar-outline" size={22} color={theme.gold} /><View style={{ flex: 1 }}><Text style={{ color: theme.ink, fontFamily: fonts.sansSemiBold, textAlign: align }}>{t('quran.hatimPlan')}</Text><Text style={{ color: theme.inkSoft, fontFamily: fonts.sans, fontSize: 11, marginTop: 3, textAlign: align }}>{hatimPlan.remaining ? t('quran.hatimDailyTarget', { count: hatimPlan.dailyTarget, days: hatimPlan.days }) : t('quran.hatimComplete')}</Text></View><Text style={{ color: theme.gold, fontFamily: fonts.sansBold }}>{hatimPlan.percent}%</Text></View>
+      <View style={{ height: 5, borderRadius: 3, backgroundColor: theme.surfaceAlt, marginTop: spacing.md }}><View style={{ width: `${hatimPlan.percent}%`, height: 5, borderRadius: 3, backgroundColor: theme.gold }} /></View>
+      <Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 10, marginTop: spacing.sm, textAlign: align }}>{t('quran.hatimRemaining', { count: hatimPlan.remaining })}</Text>
+      <View accessibilityRole="radiogroup" style={{ flexDirection: direction, gap: spacing.sm, marginTop: spacing.md }}>{QURAN_PLAN_DAYS.map((days) => <Pressable key={days} accessibilityRole="radio" accessibilityState={{ selected: quranPlanDays === days }} onPress={() => setQuranPlanDays(days)} style={{ flex: 1, minHeight: 36, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: quranPlanDays === days ? theme.gold : theme.surfaceAlt }}><Text style={{ color: quranPlanDays === days ? theme.onGold : theme.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 11 }}>{t('quran.hatimDays', { count: days })}</Text></Pressable>)}</View>
     </View>
 
     <View style={{ marginTop: spacing.lg, flexDirection: direction, alignItems: 'center', borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, borderRadius: radius.inner, paddingHorizontal: spacing.md }}>

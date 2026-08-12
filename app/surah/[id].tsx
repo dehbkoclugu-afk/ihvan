@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Share, Text, TextInput, View } from 'react-native';
 import { QuranTextSizeControl } from '@/components/QuranTextSizeControl';
 import { Screen } from '@/components/Screen';
 import { QURAN_SURAHS, getSurahAyahs } from '@/data/quran';
@@ -62,6 +62,7 @@ export default function SurahDetail() {
       const read = readKeys.has(key);
       const isLastRead = lastRead?.surah === ayah.surah && lastRead.ayah === ayah.ayah;
       const meal = getQuranMealAyah(ayah.surah, ayah.ayah, quranMeal);
+      const shareAyah = () => Share.share({ title: `${surah.transliteration} ${key}`, message: `${ayah.text}\n\n${meal?.text ? `${meal.text}\n\n` : ''}${surah.transliteration} ${key}\n\n${t('reader.shareAttribution', { source: mealSource?.name ?? 'Tanzil Uthmani' })}` });
       return <View key={key} onLayout={(event) => {
         ayahOffsets.current[ayah.ayah] = event.nativeEvent.layout.y;
         if (!didScroll.current && targetAyah === ayah.ayah) {
@@ -73,6 +74,7 @@ export default function SurahDetail() {
         <View style={{ flexDirection: direction, alignItems: 'center' }}>
           <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: theme.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: theme.gold, fontFamily: fonts.sansBold, fontSize: 12 }}>{ayah.ayah}</Text></View>
           <View style={{ flex: 1 }} />
+          <Pressable accessibilityRole="button" accessibilityLabel={t('reader.shareA11y', { reference: key })} hitSlop={8} onPress={() => void shareAyah()} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.surface }}><Ionicons name="share-outline" size={18} color={theme.inkSoft} /></Pressable>
           <Pressable accessibilityRole="checkbox" accessibilityState={{ checked: bookmarked }} accessibilityLabel={t('reader.bookmarkA11y', { reference: key })} hitSlop={8} onPress={() => { selectionFeedback(); toggleBookmark(ayah.surah, ayah.ayah); }} style={{ width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: bookmarked ? theme.goldSoft : theme.surface }}><Ionicons name={bookmarked ? 'bookmark' : 'bookmark-outline'} size={18} color={bookmarked ? theme.gold : theme.inkSoft} /></Pressable>
           <Pressable accessibilityRole="button" accessibilityState={{ selected: read }} accessibilityLabel={t('reader.markReadA11y', { reference: key })} hitSlop={8} onPress={() => { selectionFeedback(); markAyahRead(ayah.surah, ayah.ayah); }} style={{ marginStart: spacing.sm, minHeight: 38, paddingHorizontal: spacing.md, borderRadius: radius.pill, flexDirection: direction, gap: 5, alignItems: 'center', backgroundColor: isLastRead ? theme.gold : read ? theme.goldSoft : theme.surface }}><Ionicons name={read ? 'checkmark' : 'checkmark-outline'} size={15} color={isLastRead ? theme.onGold : read ? theme.gold : theme.inkSoft} /><Text style={{ color: isLastRead ? theme.onGold : read ? theme.gold : theme.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10 }}>{t(isLastRead ? 'reader.lastPosition' : read ? 'reader.read' : 'reader.markRead')}</Text></Pressable>
         </View>
