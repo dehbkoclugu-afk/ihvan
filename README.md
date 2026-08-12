@@ -6,6 +6,7 @@
 
 - Daily ayah ritual and streak
 - Full Arabic-first Quran reader with 114-surah / 30-juz navigation, direct ayah navigation, bookmarks and last-read progress
+- Optional offline Turkish and English Quran meaning translations, selected independently from the application language
 - Dua and dhikr practice
 - Foreground-location prayer times with the Adhan Turkey calculation method
 - Qibla bearing and optional live device compass
@@ -17,13 +18,14 @@
 
 The complete Arabic Quran is bundled verbatim from the Tanzil Project Uthmani text (CC BY 3.0), with an integrity fingerprint and 114-surah / 6,236-ayah validation. See `THIRD_PARTY_NOTICES.md`.
 
-Sacred-content rule: Quran text, translations/meals, tafsir and duas must never be machine/AI translated. Turkish meal, tafsir and translated dua content stay disabled until a human-authored source and its usage rights are explicitly approved.
+The optional meals are human-authored Rowwad Translation Center packages republished verbatim from QuranEnc.com: `turkish_rwwad` v1.0.4 and `english_rwwad` v1.0.19. Official SQLite snapshots, including QuranEnc footnotes, are fingerprinted and bundled without text changes. No Quran or meal content is machine/AI translated. Tafsir and unapproved translated dua content remain disabled until their sources and usage rights are reviewed.
 
 ## Run
 
 ```bash
 npm install
 npm run build:quran
+npm run build:quran-meals
 npm run typecheck
 npm test
 npx expo start

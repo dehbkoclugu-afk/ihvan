@@ -1,8 +1,12 @@
 export type SacredContentKind = 'quran' | 'translation' | 'tafsir' | 'dua';
 
 export interface SacredSource {
+  id: string;
   kind: SacredContentKind;
+  language: string;
   name: string;
+  publisher?: string;
+  version?: string;
   url: string;
   humanAuthored: boolean;
   machineTranslated: false;
@@ -17,7 +21,9 @@ export interface SacredSource {
  */
 export const SACRED_SOURCES: SacredSource[] = [
   {
+    id: 'quran-ar-tanzil-uthmani',
     kind: 'quran',
+    language: 'ar',
     name: 'Tanzil Project — Uthmani Quran Text',
     url: 'https://tanzil.net',
     humanAuthored: true,
@@ -26,15 +32,35 @@ export const SACRED_SOURCES: SacredSource[] = [
     license: 'CC BY 3.0; verbatim only',
   },
   {
+    id: 'meal-tr-quranenc-rwwad',
     kind: 'translation',
-    name: 'Turkish meal — source not yet approved',
-    url: '',
+    language: 'tr',
+    name: 'Türkçe Tercüme — Rowwad Translation Center',
+    publisher: 'Rowwad Translation Center',
+    version: '1.0.4',
+    url: 'https://quranenc.com/en/browse/turkish_rwwad',
     humanAuthored: true,
     machineTranslated: false,
-    status: 'pending-license',
+    status: 'active',
+    license: 'QuranEnc redistribution terms; verbatim, attributed, versioned',
   },
   {
+    id: 'meal-en-quranenc-rwwad',
+    kind: 'translation',
+    language: 'en',
+    name: 'English Translation — Rowwad Translation Center',
+    publisher: 'Rowwad Translation Center',
+    version: '1.0.19',
+    url: 'https://quranenc.com/en/browse/english_rwwad',
+    humanAuthored: true,
+    machineTranslated: false,
+    status: 'active',
+    license: 'QuranEnc redistribution terms; verbatim, attributed, versioned',
+  },
+  {
+    id: 'tafsir-tr-pending',
     kind: 'tafsir',
+    language: 'tr',
     name: 'Turkish tafsir — source not yet approved',
     url: '',
     humanAuthored: true,
@@ -42,7 +68,9 @@ export const SACRED_SOURCES: SacredSource[] = [
     status: 'pending-license',
   },
   {
+    id: 'dua-tr-pending',
     kind: 'dua',
+    language: 'tr',
     name: 'Dua translations — source not yet approved',
     url: '',
     humanAuthored: true,
@@ -51,6 +79,6 @@ export const SACRED_SOURCES: SacredSource[] = [
   },
 ];
 
-export function activeSource(kind: SacredContentKind): SacredSource | undefined {
-  return SACRED_SOURCES.find((source) => source.kind === kind && source.status === 'active');
+export function activeSource(kind: SacredContentKind, language?: string): SacredSource | undefined {
+  return SACRED_SOURCES.find((source) => source.kind === kind && source.status === 'active' && (!language || source.language === language));
 }

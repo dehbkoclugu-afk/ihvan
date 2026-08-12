@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Location from 'expo-location';
 import { AppState, Linking } from 'react-native';
+import { useT } from '@/i18n';
 import { isValidPrayerCoordinates } from '@/services/prayerTimes';
 
 export interface PrayerLocation {
@@ -9,13 +10,14 @@ export interface PrayerLocation {
   label: string;
 }
 
-function addressLabel(address?: Location.LocationGeocodedAddress): string {
-  if (!address) return 'Mevcut konum';
+function addressLabel(address: Location.LocationGeocodedAddress | undefined, fallback: string): string {
+  if (!address) return fallback;
   const city = address.city ?? address.district ?? address.subregion ?? address.region;
-  return [city, address.country].filter(Boolean).join(', ') || 'Mevcut konum';
+  return [city, address.country].filter(Boolean).join(', ') || fallback;
 }
 
 export function usePrayerLocation() {
+  const { t } = useT();
   const [location, setLocation] = useState<PrayerLocation | null>(null);
   const [permission, setPermission] = useState<Location.PermissionStatus | null>(null);
   const [canAskAgain, setCanAskAgain] = useState(true);
@@ -38,7 +40,7 @@ export function usePrayerLocation() {
       if (!mounted.current || operation !== locationOperation.current) return;
       if (!isValidPrayerCoordinates(latitude, longitude)) {
         setLocation(null);
-        setError('Konum koordinatları geçersiz. Konum servisini yenileyip tekrar deneyebilirsin.');
+        setError(t('location.invalidCoordinates'));
         return;
       }
       let addresses: Location.LocationGeocodedAddress[] = [];
@@ -48,15 +50,15 @@ export function usePrayerLocation() {
         // Prayer calculation only requires coordinates; geocoding is cosmetic.
       }
       if (!mounted.current || operation !== locationOperation.current) return;
-      setLocation({ latitude, longitude, label: addressLabel(addresses[0]) });
+      setLocation({ latitude, longitude, label: addressLabel(addresses[0], t('location.current')) });
     } catch {
       if (mounted.current && operation === locationOperation.current) {
-        setError('Konum alınamadı. Konum servisinin açık olduğundan emin ol.');
+        setError(t('location.unavailable'));
       }
     } finally {
       if (mounted.current && operation === locationOperation.current) setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const syncPermission = useCallback(async () => {
     const operation = ++permissionOperation.current;
@@ -77,9 +79,9 @@ export function usePrayerLocation() {
       locationOperation.current += 1;
       setLocation(null);
       setPermission(null);
-      setError('Konum izni durumu okunamadı. Biraz sonra tekrar deneyebilirsin.');
+      setError(t('location.permissionReadFailed'));
     }
-  }, [loadLocation]);
+  }, [loadLocation, t]);
 
   useEffect(() => {
     mounted.current = true;
@@ -99,9 +101,9 @@ export function usePrayerLocation() {
     try {
       await Linking.openSettings();
     } catch {
-      setError('Sistem ayarları açılamadı. İhvan için konum iznini cihaz ayarlarından açabilirsin.');
+      setError(t('location.settingsFailed'));
     }
-  }, []);
+  }, [t]);
 
   const requestLocation = useCallback(async () => {
     if (permissionRequestInFlight.current) return;
@@ -119,7 +121,7 @@ export function usePrayerLocation() {
       if (result.status !== Location.PermissionStatus.GRANTED) {
         locationOperation.current += 1;
         setLocation(null);
-        setError(result.canAskAgain ? 'Namaz vakitleri ve kıble için konum izni gerekli.' : 'Konum izni kapalı. İzni cihaz ayarlarından açabilirsin.');
+        setError(t(result.canAskAgain ? 'location.permissionRequired' : 'location.permissionDenied'));
         return;
       }
       await loadLocation();
@@ -127,12 +129,12 @@ export function usePrayerLocation() {
       if (!mounted.current || operation !== permissionOperation.current) return;
       locationOperation.current += 1;
       setLocation(null);
-      setError('Konum izni istenemedi. Biraz sonra tekrar deneyebilirsin.');
+      setError(t('location.permissionRequestFailed'));
     } finally {
       permissionRequestInFlight.current = false;
       if (mounted.current && operation === permissionOperation.current) setLoading(false);
     }
-  }, [loadLocation]);
+  }, [loadLocation, t]);
 
   return { location, permission, canAskAgain, loading, error, requestLocation, openLocationSettings, refresh: loadLocation };
 }

@@ -3,6 +3,8 @@ export interface UserDataExportInput {
     name: string;
     themePreference: string;
     quranTextSize: string;
+    language: string;
+    quranMeal: string;
   };
   prayerTracking: { completions: Record<string, string[]> };
   quranProgress: {

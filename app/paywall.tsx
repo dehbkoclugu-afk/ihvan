@@ -2,16 +2,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ArtSlot } from '@/components/ArtSlot';
 import { Screen } from '@/components/Screen';
 import { useTheme } from '@/hooks/useTheme';
+import { useT } from '@/i18n';
+import { rowDirection, textAlignment } from '@/i18n/direction';
 import { loadPlans, openSubscriptionManagement, purchase, restore, type PurchasePlan, type PlanId } from '@/services/purchases';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
 
-const names: Record<PlanId, string> = { annual: 'Yıllık', monthly: 'Aylık' };
-
 export default function Paywall() {
-  const t = useTheme();
+  const colors = useTheme();
+  const { locale, t } = useT();
+  const names: Record<PlanId, string> = { annual: t('paywall.annual'), monthly: t('paywall.monthly') };
   const [plans, setPlans] = useState<PurchasePlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [buying, setBuying] = useState<PlanId | null>(null);
@@ -19,68 +22,42 @@ export default function Paywall() {
   const [message, setMessage] = useState<string | null>(null);
 
   const loadCatalog = useCallback(async () => {
-    setLoading(true);
-    setMessage(null);
+    setLoading(true); setMessage(null);
     try {
-      const catalog = await loadPlans();
-      setPlans(catalog.plans);
-      if (catalog.status === 'unavailable') setMessage('Satın alma seçenekleri şu anda yüklenemiyor. Daha sonra tekrar deneyebilirsin.');
-    } catch {
-      setPlans([]);
-      setMessage('Satın alma seçenekleri yüklenemedi. Bağlantını kontrol edip tekrar deneyebilirsin.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+      const catalog = await loadPlans(); setPlans(catalog.plans);
+      if (catalog.status === 'unavailable') setMessage(t('paywall.catalogUnavailable'));
+    } catch { setPlans([]); setMessage(t('paywall.catalogError')); }
+    finally { setLoading(false); }
+  }, [t]);
   useEffect(() => { void loadCatalog(); }, [loadCatalog]);
 
   const buy = async (id: PlanId) => {
-    setBuying(id);
-    setMessage(null);
+    setBuying(id); setMessage(null);
     try {
       const result = await purchase(id);
-      if (result.status === 'purchased') {
-        router.back();
-        return;
-      }
-      if (result.status === 'pending') setMessage('Ödeme mağaza tarafından işleniyor. Sonuçlandığında üyeliğin otomatik olarak güncellenecek.');
-      else if (result.status === 'cancelled') setMessage('Satın alma iptal edildi.');
-      else if (result.status === 'unavailable') setMessage('Bu satın alma şu anda kullanılamıyor.');
-      else setMessage('Satın alma tamamlanamadı. Lütfen tekrar dene.');
-    } catch {
-      setMessage('Satın alma sırasında bir hata oluştu. Lütfen tekrar dene.');
-    } finally {
-      setBuying(null);
-    }
+      if (result.status === 'purchased') { router.back(); return; }
+      if (result.status === 'pending') setMessage(t('paywall.pending'));
+      else if (result.status === 'cancelled') setMessage(t('paywall.cancelled'));
+      else if (result.status === 'unavailable') setMessage(t('paywall.unavailable'));
+      else setMessage(t('paywall.failed'));
+    } catch { setMessage(t('paywall.error')); }
+    finally { setBuying(null); }
   };
-
   const restorePurchases = async () => {
-    if (restoring) return;
-    setRestoring(true);
-    setMessage(null);
-    try {
-      if (await restore()) router.back();
-      else setMessage('Geri yüklenecek aktif bir İhvan Plus üyeliği bulunamadı.');
-    } catch {
-      setMessage('Satın alımlar geri yüklenemedi. Lütfen tekrar dene.');
-    } finally {
-      setRestoring(false);
-    }
+    if (restoring) return; setRestoring(true); setMessage(null);
+    try { if (await restore()) router.back(); else setMessage(t('paywall.restoreEmpty')); }
+    catch { setMessage(t('paywall.restoreError')); }
+    finally { setRestoring(false); }
   };
 
   return <Screen>
-    <Pressable accessibilityRole="button" accessibilityLabel="İhvan Plus ekranını kapat" onPress={() => router.back()} style={{ alignSelf: 'flex-end', width: 40, height: 40, borderRadius: 20, backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="close" size={21} color={t.ink} /></Pressable>
-    <Text style={{ color: t.gold, fontFamily: fonts.sansBold, letterSpacing: 2, marginTop: spacing.xl }}>İHVAN PLUS</Text>
-    <Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 36, lineHeight: 43, marginTop: spacing.md }}>Ritüelini derinleştir.</Text>
-    <Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 16, lineHeight: 24, marginTop: spacing.md }}>İhvan Plus ile uygulamanın sürdürülebilir gelişimini destekle. Plan ve fiyat bilgileri mağaza kataloğundan yüklenir.</Text>
-    {loading ? <ActivityIndicator accessibilityLabel="İhvan Plus planları yükleniyor" color={t.gold} style={{ marginTop: spacing.xxxl }} /> : plans.length ? <View style={{ gap: spacing.md, marginTop: spacing.xxl }}>{plans.map((plan) => { const disabled = buying !== null || restoring; return <Pressable key={plan.id} accessibilityRole="button" accessibilityLabel={`${names[plan.id]} planı, ${plan.price}${plan.trialEligible ? `, ${plan.trialDays} gün ücretsiz deneme` : ''}`} accessibilityState={{ disabled }} disabled={disabled} onPress={() => void buy(plan.id)} style={({ pressed }) => ({ backgroundColor: plan.id === 'annual' ? t.goldSoft : t.surface, borderColor: plan.id === 'annual' ? t.gold : t.border, borderWidth: 1, borderRadius: radius.inner, padding: spacing.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', opacity: disabled ? 0.6 : pressed ? 0.75 : 1 })}><View><Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 16 }}>{names[plan.id]}</Text>{plan.trialEligible ? <Text style={{ color: t.gold, fontFamily: fonts.sans, fontSize: 12, marginTop: 3 }}>{plan.trialDays} gün ücretsiz dene</Text> : null}</View>{buying === plan.id ? <ActivityIndicator size="small" color={t.gold} /> : <Text style={{ color: t.ink, fontFamily: fonts.sansBold }}>{plan.price}</Text>}</Pressable>; })}</View> : <Pressable accessibilityRole="button" onPress={() => void loadCatalog()} style={{ alignSelf: 'center', borderRadius: radius.pill, backgroundColor: t.surface, paddingHorizontal: spacing.xl, paddingVertical: 11, marginTop: spacing.xxl }}><Text style={{ color: t.gold, fontFamily: fonts.sansSemiBold }}>Tekrar dene</Text></Pressable>}
-    {message ? <View accessibilityRole="alert" style={{ backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.lg }}><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18, textAlign: 'center' }}>{message}</Text></View> : null}
-    <Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, textAlign: 'center', marginTop: spacing.lg }}>Aylık plan her ay, yıllık plan her yıl otomatik yenilenir. Ücretsiz deneme sunuluyorsa deneme bitince seçtiğin planın gösterilen ücreti tahsil edilir. Aboneliği Google Play hesabından istediğin zaman iptal edebilirsin; iptal mevcut dönemin sonunda geçerli olur.</Text>
-    <Pressable accessibilityRole="button" accessibilityLabel="Satın alımları geri yükle" accessibilityState={{ disabled: restoring || buying !== null }} disabled={restoring || buying !== null} onPress={() => void restorePurchases()} style={{ alignItems: 'center', marginTop: spacing.xl, opacity: restoring || buying !== null ? 0.6 : 1 }}>{restoring ? <ActivityIndicator size="small" color={t.gold} /> : <Text style={{ color: t.inkSoft, fontFamily: fonts.sansMedium }}>Satın alımları geri yükle</Text>}</Pressable>
-    <View style={{ flexDirection: 'row', justifyContent: 'center', gap: spacing.lg, marginTop: spacing.lg }}>
-      <Pressable accessibilityRole="link" onPress={() => router.push('/data-and-privacy')}><Text style={{ color: t.gold, fontFamily: fonts.sansMedium, fontSize: 11 }}>Gizlilik ve veriler</Text></Pressable>
-      <Pressable accessibilityRole="link" onPress={() => void openSubscriptionManagement().catch(() => setMessage('Google Play abonelik ayarları açılamadı.'))}><Text style={{ color: t.gold, fontFamily: fonts.sansMedium, fontSize: 11 }}>Aboneliği yönet</Text></Pressable>
-    </View>
+    <Pressable accessibilityRole="button" accessibilityLabel={t('a11y.closePaywall')} onPress={() => router.back()} style={{ alignSelf: 'flex-end', width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="close" size={21} color={colors.ink} /></Pressable>
+    <ArtSlot id="I12-paywall-hero" variant="hero" height={300} style={{ marginTop: spacing.md }}><View style={{ flex: 1, justifyContent: 'flex-end' }}><Text style={{ color: '#F6DDA3', fontFamily: fonts.sansBold, letterSpacing: 2, textAlign: textAlignment(locale) }}>{t('paywall.brand')}</Text><Text style={{ color: '#FFF8EA', fontFamily: fonts.serif, fontSize: 34, lineHeight: 41, marginTop: spacing.sm, textAlign: textAlignment(locale) }}>{t('paywall.title')}</Text></View></ArtSlot>
+    <Text style={{ color: colors.inkSoft, fontFamily: fonts.sans, fontSize: 16, lineHeight: 24, marginTop: spacing.lg, textAlign: textAlignment(locale) }}>{t('paywall.body')}</Text>
+    {loading ? <ActivityIndicator accessibilityLabel={t('paywall.loading')} color={colors.gold} style={{ marginTop: spacing.xxxl }} /> : plans.length ? <View style={{ gap: spacing.md, marginTop: spacing.xxl }}>{plans.map((plan) => { const disabled = buying !== null || restoring; const a11y = plan.trialEligible ? t('paywall.planTrialA11y', { plan: names[plan.id], price: plan.price, days: plan.trialDays ?? 0 }) : t('paywall.planA11y', { plan: names[plan.id], price: plan.price }); return <Pressable key={plan.id} accessibilityRole="button" accessibilityLabel={a11y} accessibilityState={{ disabled }} disabled={disabled} onPress={() => void buy(plan.id)} style={({ pressed }) => ({ backgroundColor: plan.id === 'annual' ? colors.goldSoft : colors.surface, borderColor: plan.id === 'annual' ? colors.gold : colors.border, borderWidth: 1, borderRadius: radius.inner, padding: spacing.lg, flexDirection: rowDirection(locale), alignItems: 'center', justifyContent: 'space-between', opacity: disabled ? 0.6 : pressed ? 0.75 : 1 })}><View><Text style={{ color: colors.ink, fontFamily: fonts.sansSemiBold, fontSize: 16, textAlign: textAlignment(locale) }}>{names[plan.id]}</Text>{plan.trialEligible ? <Text style={{ color: colors.gold, fontFamily: fonts.sans, fontSize: 12, marginTop: 3 }}>{t('paywall.freeTrial', { days: plan.trialDays ?? 0 })}</Text> : null}</View>{buying === plan.id ? <ActivityIndicator size="small" color={colors.gold} /> : <Text style={{ color: colors.ink, fontFamily: fonts.sansBold }}>{plan.price}</Text>}</Pressable>; })}</View> : <Pressable accessibilityRole="button" onPress={() => void loadCatalog()} style={{ alignSelf: 'center', borderRadius: radius.pill, backgroundColor: colors.surface, paddingHorizontal: spacing.xl, paddingVertical: 11, marginTop: spacing.xxl }}><Text style={{ color: colors.gold, fontFamily: fonts.sansSemiBold }}>{t('common.retry')}</Text></Pressable>}
+    {message ? <View accessibilityRole="alert" style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.inner, padding: spacing.md, marginTop: spacing.lg }}><Text style={{ color: colors.inkSoft, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18, textAlign: 'center' }}>{message}</Text></View> : null}
+    <Text style={{ color: colors.inkFaint, fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, textAlign: 'center', marginTop: spacing.lg }}>{t('paywall.renewal')}</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel={t('a11y.restorePurchases')} accessibilityState={{ disabled: restoring || buying !== null }} disabled={restoring || buying !== null} onPress={() => void restorePurchases()} style={{ alignItems: 'center', marginTop: spacing.xl, opacity: restoring || buying !== null ? 0.6 : 1 }}>{restoring ? <ActivityIndicator size="small" color={colors.gold} /> : <Text style={{ color: colors.inkSoft, fontFamily: fonts.sansMedium }}>{t('paywall.restore')}</Text>}</Pressable>
+    <View style={{ flexDirection: rowDirection(locale), justifyContent: 'center', gap: spacing.lg, marginTop: spacing.lg }}><Pressable accessibilityRole="link" onPress={() => router.push('/data-and-privacy')}><Text style={{ color: colors.gold, fontFamily: fonts.sansMedium, fontSize: 11 }}>{t('paywall.privacy')}</Text></Pressable><Pressable accessibilityRole="link" onPress={() => void openSubscriptionManagement().catch(() => setMessage(t('paywall.manageError')))}><Text style={{ color: colors.gold, fontFamily: fonts.sansMedium, fontSize: 11 }}>{t('paywall.manage')}</Text></Pressable></View>
   </Screen>;
 }

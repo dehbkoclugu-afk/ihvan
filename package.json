@@ -6,10 +6,14 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "lint": "expo lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "build:quran": "node scripts/build-quran.mjs",
-    "test": "node --experimental-strip-types --test src/lib/dates.test.ts src/lib/dhikr.test.ts src/lib/journal.test.ts src/lib/notificationRouting.test.ts src/lib/prayerTracking.test.ts src/lib/quranHabit.test.ts src/lib/releaseConfig.test.ts src/lib/ritual.test.ts src/lib/serialTaskQueue.test.ts src/lib/userData.test.ts src/lib/userProfile.test.ts src/services/purchases.test.ts src/services/prayerTimes.test.ts src/data/quran.integrity.test.ts"
+    "build:quran-meals": "node scripts/build-quran-meals.mjs",
+    "check:quran-meal-versions": "node scripts/check-quran-meal-versions.mjs",
+    "validate:locales": "node scripts/validate-ui-locales.mjs",
+    "ui-locales:verify:production": "node scripts/validate-ui-locales.mjs",
+    "test": "node --experimental-strip-types --test src/lib/dates.test.ts src/lib/dhikr.test.ts src/lib/journal.test.ts src/lib/notificationRouting.test.ts src/lib/prayerTracking.test.ts src/lib/quranHabit.test.ts src/lib/releaseConfig.test.ts src/lib/ritual.test.ts src/lib/serialTaskQueue.test.ts src/lib/userData.test.ts src/lib/userProfile.test.ts src/services/purchases.test.ts src/services/prayerTimes.test.ts src/data/quran.integrity.test.ts src/data/quranMeals.integrity.test.ts src/i18n/applicationLocales.test.ts src/i18n/direction.test.ts src/i18n/translations.test.ts src/assets/registry.test.ts src/components/progress.test.ts"
   },
   "dependencies": {
     "@expo-google-fonts/figtree": "^0.2.3",

@@ -30,7 +30,12 @@
       "expo-router",
       "expo-font",
       "expo-asset",
-      "expo-localization",
+      ["expo-localization", {
+        "supportedLocales": {
+          "ios": ["tr", "en", "ar"],
+          "android": ["tr", "en", "ar"]
+        }
+      }],
       ["expo-location", {
         "locationWhenInUsePermission": "İhvan, bulunduğun yere göre namaz vakitlerini ve kıble yönünü hesaplamak için konumunu kullanır.",
         "locationAlwaysPermission": false,
