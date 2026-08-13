@@ -105,22 +105,25 @@ jobs:
             sleep 30
             mkdir -p screenshots
             adb exec-out screencap -p > screenshots/01-onboarding.png
-            device_size="$(adb shell wm size | tail -n 1 | sed 's/.*: //;s/\r//')"
-            device_width="${device_size%x*}"
-            device_height="${device_size#*x}"
-            adb shell input tap "$((device_width / 2))" "$((device_height * 88 / 100))"
+            adb shell input tap 540 2112
             sleep 5
             adb exec-out screencap -p > screenshots/02-today.png
-            index=3
-            for route in quran worship journal profile paywall; do
-              adb shell am start -W -a android.intent.action.VIEW -d "ihvan://${route}" com.ihvan.quran >/dev/null
-              sleep 3
-              adb exec-out screencap -p > "screenshots/0${index}-${route}.png"
-              index="$((index + 1))"
-            done
-            for screenshot in screenshots/*.png; do
-              test "$(stat -c%s "$screenshot")" -gt 50000
-            done
+            adb shell am start -W -a android.intent.action.VIEW -d "ihvan://quran" com.ihvan.quran >/dev/null
+            sleep 3
+            adb exec-out screencap -p > screenshots/03-quran.png
+            adb shell am start -W -a android.intent.action.VIEW -d "ihvan://worship" com.ihvan.quran >/dev/null
+            sleep 3
+            adb exec-out screencap -p > screenshots/04-worship.png
+            adb shell am start -W -a android.intent.action.VIEW -d "ihvan://journal" com.ihvan.quran >/dev/null
+            sleep 3
+            adb exec-out screencap -p > screenshots/05-journal.png
+            adb shell am start -W -a android.intent.action.VIEW -d "ihvan://profile" com.ihvan.quran >/dev/null
+            sleep 3
+            adb exec-out screencap -p > screenshots/06-profile.png
+            adb shell am start -W -a android.intent.action.VIEW -d "ihvan://paywall" com.ihvan.quran >/dev/null
+            sleep 3
+            adb exec-out screencap -p > screenshots/07-paywall.png
+            test "$(find screenshots -name '*.png' -size +50000c | wc -l)" -eq 7
             test "$(sha256sum screenshots/*.png | awk '{print $1}' | sort -u | wc -l)" -ge 4
             adb logcat -d > logcat.txt
             adb shell pidof com.ihvan.quran
