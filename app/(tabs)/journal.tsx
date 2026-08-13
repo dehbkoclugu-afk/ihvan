@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { ArtSlot } from '@/components/ArtSlot';
 import { AppButton } from '@/components/AppButton';
+import { ScreenSubtitle, ScreenTitle } from '@/components/AppText';
 import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { useArtwork } from '@/hooks/useArtwork';
@@ -41,8 +42,8 @@ export default function Journal() {
   };
 
   return <Screen tabbed>
-    <Text style={{ color: theme.ink, fontFamily: fonts.serif, fontSize: 32, textAlign: textAlignment(locale) }}>{t('journal.title')}</Text>
-    <Text style={{ color: theme.inkSoft, fontFamily: fonts.sans, lineHeight: 22, marginTop: 6, textAlign: textAlignment(locale) }}>{t('journal.subtitle')}</Text>
+    <ScreenTitle>{t('journal.title')}</ScreenTitle>
+    <ScreenSubtitle>{t('journal.subtitle')}</ScreenSubtitle>
 
     <TextInput
       accessibilityLabel={t('journal.noteA11y', { date: formatLocaleDate(new Date()) })}

@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { ArtSlot } from '@/components/ArtSlot';
+import { ScreenSubtitle, ScreenTitle } from '@/components/AppText';
 import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { ProgressBar } from '@/components/ProgressBar';
@@ -66,8 +67,8 @@ export default function Quran() {
   const forward = getDirectionalIconName('chevron-forward', locale);
 
   return <Screen tabbed>
-    <Text style={{ color: theme.ink, fontFamily: fonts.serif, fontSize: 32, textAlign: align }}>{t('quran.title')}</Text>
-    <Text style={{ color: theme.inkSoft, fontFamily: fonts.sans, lineHeight: 22, marginTop: 6, textAlign: align }}>{t('quran.subtitle')}</Text>
+    <ScreenTitle>{t('quran.title')}</ScreenTitle>
+    <ScreenSubtitle>{t('quran.subtitle')}</ScreenSubtitle>
 
     {lastRead && lastSurah ? <Pressable accessibilityRole="button" accessibilityLabel={t('quran.continueA11y', { surah: lastSurah.transliteration, ayah: lastRead.ayah })} onPress={() => openAyah(lastRead.surah, lastRead.ayah)} style={({ pressed }) => ({ borderRadius: radius.card, marginTop: spacing.lg, opacity: pressed ? 0.8 : 1 })}>
       <ArtSlot id="I4-continue-quran" variant="hero" height={178} radius={radius.card}>
@@ -135,7 +136,7 @@ export default function Quran() {
           <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: theme.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: theme.gold, fontFamily: fonts.sansBold }}>{surah.id}</Text></View>
           <View style={{ flex: 1 }}><Text style={{ color: theme.ink, fontFamily: fonts.sansSemiBold, fontSize: 16, textAlign: align }}>{surah.transliteration}</Text><Text style={{ color: theme.inkSoft, fontFamily: fonts.sans, fontSize: 12, marginTop: 2, textAlign: align }}>{t(surah.revelationPlace === 'meccan' ? 'quran.meccan' : 'quran.medinan')} · {t('common.ayahCount', { count: surah.ayahCount })}{read ? ` ${t('quran.readSuffix', { percent: Math.round((read / surah.ayahCount) * 100) })}` : ''}</Text></View>
           {read === surah.ayahCount ? <Ionicons name="checkmark-circle" size={18} color={theme.gold} /> : null}
-          <Text numberOfLines={1} style={{ maxWidth: '32%', color: theme.ink, fontSize: 20, writingDirection: 'rtl', textAlign: 'right' }}>{surah.arabicName}</Text><Ionicons name={forward} size={17} color={theme.inkFaint} />
+          <Text numberOfLines={1} style={{ maxWidth: '32%', color: theme.ink, fontFamily: fonts.quran, fontSize: 20, writingDirection: 'rtl', textAlign: 'right' }}>{surah.arabicName}</Text><Ionicons name={forward} size={17} color={theme.inkFaint} />
         </Pressable>;
       })}</View>
       {!visibleSurahs.length ? <Text style={{ color: theme.inkSoft, textAlign: 'center', fontFamily: fonts.sans, marginVertical: spacing.xl }}>{t(query && !verseMatch ? 'quran.surahNotFound' : 'quran.noSurahForFilter')}</Text> : null}

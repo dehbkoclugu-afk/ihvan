@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { Screen } from '@/components/Screen';
+import { ScreenSubtitle, ScreenTitle } from '@/components/AppText';
 import { useTheme } from '@/hooks/useTheme';
 import { APPLICATION_LOCALES, type AppLocale, type LanguagePreference, useT } from '@/i18n';
 import { getApplicationDirection, getDirectionalIconName, rowDirection, textAlignment } from '@/i18n/direction';
@@ -28,8 +29,8 @@ export default function ApplicationLanguage() {
 
   return <Screen>
     <Pressable accessibilityRole="button" accessibilityLabel={t('a11y.back')} onPress={() => router.back()} hitSlop={12} style={{ alignSelf: locale === 'ar' ? 'flex-end' : 'flex-start', width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' }}><Ionicons name={getDirectionalIconName('arrow-back', locale)} size={20} color={colors.ink} /></Pressable>
-    <Text style={{ color: colors.ink, fontFamily: fonts.serif, fontSize: 32, lineHeight: 39, marginTop: spacing.xl, textAlign: textAlignment(locale), writingDirection: direction }}>{t('language.title')}</Text>
-    <Text style={{ color: colors.inkSoft, fontFamily: fonts.sans, fontSize: 14, lineHeight: 21, marginTop: spacing.sm, textAlign: textAlignment(locale), writingDirection: direction }}>{t('language.subtitle')}</Text>
+    <ScreenTitle style={{ marginTop: spacing.xl, writingDirection: direction }}>{t('language.title')}</ScreenTitle>
+    <ScreenSubtitle style={{ marginTop: spacing.sm, writingDirection: direction }}>{t('language.subtitle')}</ScreenSubtitle>
     <View accessibilityRole="radiogroup" style={{ gap: spacing.sm, marginTop: spacing.xl }}>
       {options.map((option) => {
         const selected = preference === option.value;

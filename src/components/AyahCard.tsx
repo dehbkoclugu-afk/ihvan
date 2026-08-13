@@ -29,7 +29,7 @@ export function AyahCard({ ayah, done, onComplete, onOpen }: { ayah: DailyAyah; 
     <View style={{ minHeight: cardHeight, padding: spacing.xl, justifyContent: 'space-between' }}>
       <View>
         <Text style={{ color: '#B6E3D4', fontFamily: fonts.sansSemiBold, fontSize: 12, letterSpacing: 1.6 }}>{ayah.reference.toUpperCase()}</Text>
-        <Text selectable numberOfLines={onOpen ? PREVIEW_LINES : undefined} ellipsizeMode="tail" onTextLayout={captureTextLayout} style={{ color: '#F6F2E9', fontSize: metrics.fontSize, lineHeight: metrics.lineHeight, textAlign: 'right', marginTop: spacing.xl, writingDirection: 'rtl' }}>{ayah.text}</Text>
+        <Text selectable numberOfLines={onOpen ? PREVIEW_LINES : undefined} ellipsizeMode="tail" onTextLayout={captureTextLayout} style={{ color: '#F6F2E9', fontFamily: fonts.quran, fontSize: metrics.fontSize, lineHeight: metrics.lineHeight, textAlign: 'right', marginTop: spacing.xl, writingDirection: 'rtl' }}>{ayah.text}</Text>
         <Text style={{ color: 'rgba(246,242,233,0.68)', fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.md }}>{t('today.ayahAttribution', { surah: ayah.surah, ayah: ayah.ayah })}</Text>
       </View>
       <View style={{ flexDirection: rowDirection(locale), alignItems: 'center', gap: spacing.sm, marginTop: spacing.lg }}>

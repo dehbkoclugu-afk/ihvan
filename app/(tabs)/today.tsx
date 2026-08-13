@@ -56,7 +56,7 @@ export default function Today() {
     <View style={{ flexDirection: direction, justifyContent: 'space-between', alignItems: 'flex-start', gap: spacing.md }}>
       <View style={{ flex: 1 }}>
         <Text style={{ color: theme.gold, fontFamily: fonts.sansSemiBold, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1.3, textAlign: align }}>{date}</Text>
-        <Text style={{ color: theme.ink, fontFamily: fonts.serif, fontSize: 29, marginTop: 4, textAlign: align }}>{name ? t('today.greetingNamed', { name }) : t('today.greeting')}</Text>
+        <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.82} style={{ color: theme.ink, fontFamily: fonts.serif, fontSize: 29, lineHeight: 35, marginTop: 4, textAlign: align }}>{name ? t('today.greetingNamed', { name }) : t('today.greeting')}</Text>
       </View>
       <StreakMark count={streakCount} label={t('common.day')} accessibilityLabel={t('today.streak', { count: streakCount })} compact />
     </View>

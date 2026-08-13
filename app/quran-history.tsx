@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { Screen } from '@/components/Screen';
+import { ScreenSubtitle, ScreenTitle } from '@/components/AppText';
 import { StreakMark } from '@/components/StreakMark';
 import { QURAN_JUZS, QURAN_SURAHS, getAyah } from '@/data/quran';
 import { useTheme } from '@/hooks/useTheme';
@@ -43,8 +44,8 @@ export default function QuranHistory() {
 
   return <Screen>
     <Pressable accessibilityRole="button" accessibilityLabel={t('a11y.back')} onPress={() => router.back()} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.surface, alignItems: 'center', justifyContent: 'center' }}><Ionicons name={getDirectionalIconName('arrow-back', locale)} size={20} color={theme.ink} /></Pressable>
-    <Text style={{ color: theme.ink, fontFamily: fonts.serif, fontSize: 32, marginTop: spacing.xl, textAlign: align }}>{t('history.title')}</Text>
-    <Text style={{ color: theme.inkSoft, fontFamily: fonts.sans, lineHeight: 21, marginTop: 6, textAlign: align }}>{t('history.localOnly')}</Text>
+    <ScreenTitle style={{ marginTop: spacing.xl }}>{t('history.title')}</ScreenTitle>
+    <ScreenSubtitle>{t('history.localOnly')}</ScreenSubtitle>
 
     <View style={{ flexDirection: direction, gap: spacing.sm, marginTop: spacing.xl }}>{[7, 30, 90].map((period) => {
       const summary = quranReadingSummary(readingDays, period);

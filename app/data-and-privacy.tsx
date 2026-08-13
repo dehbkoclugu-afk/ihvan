@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useState, type ComponentProps } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { Screen } from '@/components/Screen';
+import { ScreenSubtitle, ScreenTitle } from '@/components/AppText';
 import { useTheme } from '@/hooks/useTheme';
 import { useT, type TranslationKey } from '@/i18n';
 import { getApplicationDirection, getDirectionalIconName, rowDirection, textAlignment } from '@/i18n/direction';
@@ -29,8 +30,8 @@ export default function DataAndPrivacy() {
   const confirmClear = (title: string, message: string, action: () => void, success: string) => Alert.alert(title, message, [{ text: t('common.cancel'), style: 'cancel' }, { text: t('common.delete'), style: 'destructive', onPress: () => { action(); setDataMessage(success); } }]);
   return <Screen>
     <Pressable accessibilityRole="button" accessibilityLabel={t('a11y.back')} onPress={() => router.back()} hitSlop={12} style={{ alignSelf: locale === 'ar' ? 'flex-end' : 'flex-start', minHeight: 44, justifyContent: 'center' }}><Ionicons name={getDirectionalIconName('arrow-back', locale)} size={24} color={colors.ink} /></Pressable>
-    <Text style={{ color: colors.ink, fontFamily: fonts.serif, fontSize: 32, lineHeight: 39, marginTop: spacing.md, textAlign: textAlignment(locale), writingDirection: direction }}>{t('data.sourcesTitle')}</Text>
-    <Text style={{ color: colors.inkSoft, fontFamily: fonts.sans, fontSize: 14, lineHeight: 21, marginTop: spacing.sm, textAlign: textAlignment(locale), writingDirection: direction }}>{t('data.sourcesIntro')}</Text>
+    <ScreenTitle style={{ marginTop: spacing.md, writingDirection: direction }}>{t('data.sourcesTitle')}</ScreenTitle>
+    <ScreenSubtitle style={{ marginTop: spacing.sm, writingDirection: direction }}>{t('data.sourcesIntro')}</ScreenSubtitle>
     <View style={{ gap: spacing.md, marginTop: spacing.xl }}>{sections.map((section) => <View key={section.title} style={{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: radius.inner, padding: spacing.lg }}><View style={{ flexDirection: rowDirection(locale), alignItems: 'center', gap: spacing.sm }}><Ionicons name={section.icon} size={20} color={colors.gold} /><Text style={{ color: colors.ink, fontFamily: fonts.sansSemiBold, fontSize: 16, flex: 1, textAlign: textAlignment(locale), writingDirection: direction }}>{t(section.title)}</Text></View><Text style={{ color: colors.inkSoft, fontFamily: fonts.sans, fontSize: 13, lineHeight: 20, marginTop: spacing.sm, textAlign: textAlignment(locale), writingDirection: direction }}>{t(section.body)}</Text></View>)}</View>
     <Text style={{ color: colors.ink, fontFamily: fonts.sansSemiBold, fontSize: 18, marginTop: spacing.xxl, textAlign: textAlignment(locale) }}>{t('data.manageLocal')}</Text>
     <Text style={{ color: colors.inkSoft, fontFamily: fonts.sans, fontSize: 12, lineHeight: 18, marginTop: spacing.sm, textAlign: textAlignment(locale) }}>{t('data.manageLocalBody')}</Text>

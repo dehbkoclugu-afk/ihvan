@@ -1,4 +1,6 @@
 export const fonts = {
+  /** Dedicated Arabic typeface for Quran and dua text. */
+  quran: 'Amiri_400Regular',
   /** Editorial serif , scripture, display headings */
   serif: 'Fraunces_600SemiBold',
   serifLight: 'Fraunces_400Regular',
@@ -17,5 +19,5 @@ export const type = {
   bodyMedium: { fontFamily: fonts.sansMedium, fontSize: 17, lineHeight: 26 },
   secondary: { fontFamily: fonts.sans, fontSize: 15, lineHeight: 22 },
   caption: { fontFamily: fonts.sansMedium, fontSize: 13, lineHeight: 18 },
-  verse: { fontFamily: fonts.serifLight, fontSize: 26, lineHeight: 38 },
+  verse: { fontFamily: fonts.quran, fontSize: 26, lineHeight: 44 },
 } as const;

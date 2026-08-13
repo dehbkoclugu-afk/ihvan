@@ -3,6 +3,8 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { Screen } from '@/components/Screen';
+import { AppButton } from '@/components/AppButton';
+import { ScreenTitle } from '@/components/AppText';
 import { ProgressBar } from '@/components/ProgressBar';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { useTheme } from '@/hooks/useTheme';
@@ -95,11 +97,11 @@ export default function Profile() {
   };
 
   return <Screen tabbed>
-    <Text style={{ color: t.ink, fontFamily: fonts.serif, fontSize: 32, textAlign: textAlignment(locale) }}>{copy('profile.title')}</Text>
+    <ScreenTitle>{copy('profile.title')}</ScreenTitle>
     <Text style={{ color: t.ink, fontFamily: fonts.sansSemiBold, fontSize: 18, marginTop: spacing.xl, textAlign: textAlignment(locale) }}>{copy('profile.profile')}</Text>
     <View style={{ flexDirection: rowDirection(locale), alignItems: 'center', gap: spacing.sm, marginTop: spacing.md }}>
       <TextInput accessibilityLabel={copy('profile.name')} value={nameDraft} onChangeText={setNameDraft} onSubmitEditing={saveName} maxLength={50} placeholder={copy('profile.namePlaceholder')} placeholderTextColor={t.inkFaint} returnKeyType="done" textAlign={textAlignment(locale)} style={{ flex: 1, minHeight: 46, color: t.ink, backgroundColor: t.surface, borderWidth: 1, borderColor: t.border, borderRadius: radius.inner, paddingHorizontal: spacing.lg, fontFamily: fonts.sans, fontSize: 14 }} />
-      <Pressable accessibilityRole="button" accessibilityLabel={copy('common.save')} accessibilityState={{ disabled: !canSaveName }} onPress={saveName} disabled={!canSaveName} style={({ pressed }) => ({ minHeight: 46, justifyContent: 'center', paddingHorizontal: spacing.lg, borderRadius: radius.inner, backgroundColor: canSaveName ? t.gold : t.surfaceAlt, opacity: pressed ? 0.75 : 1 })}><Text style={{ color: canSaveName ? t.onGold : t.inkFaint, fontFamily: fonts.sansSemiBold, fontSize: 13 }}>{copy('common.save')}</Text></Pressable>
+      <AppButton label={copy('common.save')} disabled={!canSaveName} onPress={saveName} style={{ minHeight: 46, borderRadius: radius.inner, paddingHorizontal: spacing.lg }} />
     </View>
     <View style={{ flexDirection: rowDirection(locale), gap: spacing.md, marginTop: spacing.xl }}><View style={{ flex: 1, backgroundColor: t.surface, borderRadius: radius.inner, padding: spacing.lg }}><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 28 }}>{formatLocaleNumber(streakCount, undefined, locale)}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, textAlign: textAlignment(locale) }}>{copy('profile.currentStreak')}</Text></View><View style={{ flex: 1, backgroundColor: t.surface, borderRadius: radius.inner, padding: spacing.lg }}><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 28 }}>{formatLocaleNumber(bestCount, undefined, locale)}</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, textAlign: textAlignment(locale) }}>{copy('profile.bestStreak')}</Text></View></View>
     <Pressable accessibilityRole="button" onPress={() => router.push('/prayer-history')} style={({ pressed }) => ({ backgroundColor: t.surface, borderRadius: radius.inner, padding: spacing.lg, marginTop: spacing.md, transform: [{ scale: pressed ? 0.99 : 1 }] })}><View style={{ flexDirection: rowDirection(locale), alignItems: 'center' }}><View style={{ flex: 1 }}><View style={{ flexDirection: rowDirection(locale), alignItems: 'baseline' }}><Text style={{ color: t.gold, fontFamily: fonts.serif, fontSize: 28 }}>{formatLocaleNumber(prayerWeek, undefined, locale)}%</Text><Text style={{ color: t.inkSoft, fontFamily: fonts.sans, marginHorizontal: spacing.sm }}>{copy('profile.prayerWeek')}</Text></View></View><Ionicons name={getDirectionalIconName('chevron-forward', locale)} size={18} color={t.inkFaint} /></View><ProgressBar percent={prayerWeek} style={{ marginTop: spacing.md }} /><Text style={{ color: t.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.sm, textAlign: textAlignment(locale) }}>{copy('profile.historyDetails')}</Text></Pressable>

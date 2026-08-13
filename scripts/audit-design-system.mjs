@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 const root = new URL('../', import.meta.url);
 const read = (path) => readFile(new URL(path, root), 'utf8');
 const manifest = JSON.parse(await read('docs/qa/critical-screens.json'));
+const status = JSON.parse(await read('docs/qa/design-100-status.json'));
 
 assert.deepEqual(manifest.locales, ['tr', 'en', 'ar'], 'visual QA must cover TR, EN and AR');
 assert.deepEqual(manifest.themes, ['dawn', 'vigil'], 'visual QA must cover both themes');
@@ -25,4 +26,15 @@ assert.match(ayahCard, /openFullAyah/, 'bounded ayah preview must offer the full
 const art = await read('src/components/ArtSlot.tsx');
 assert.match(art, /focalPoints\?\.\[artwork\.scheme\]/, 'art crop must support theme-specific focal points');
 
-console.log(`Design audit passed: ${manifest.scenarios.length} scenarios × ${manifest.locales.length} locales × ${manifest.themes.length} themes × ${manifest.viewports.length} viewports.`);
+const allStatusIds = [...status.completed, ...status.partial, ...status.pending].sort((a, b) => a - b);
+assert.deepEqual(allStatusIds, Array.from({ length: 100 }, (_, index) => index + 1), 'the 100-point design plan must track every item exactly once');
+assert.equal(new Set(allStatusIds).size, 100, 'design status ids must not overlap');
+const weightedScore = status.completed.length + status.partial.length / 2;
+assert.equal(weightedScore, 91, 'design progress score changed; update the reviewed status file intentionally');
+const rootLayout = await read('app/_layout.tsx');
+assert.match(rootLayout, /Amiri_400Regular/, 'the dedicated Arabic font must remain bundled');
+const previewWorkflow = await read('.github/workflows/android-preview.yml');
+assert.match(previewWorkflow, /ihvan-preview-screenshots/, 'Android preview must upload real UI screenshots');
+assert.match(previewWorkflow, /screencap/, 'Android preview must capture the running app');
+
+console.log(`Design audit passed: score ${weightedScore}/100; ${manifest.scenarios.length} scenarios × ${manifest.locales.length} locales × ${manifest.themes.length} themes × ${manifest.viewports.length} viewports.`);

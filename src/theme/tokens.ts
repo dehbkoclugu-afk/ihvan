@@ -48,7 +48,7 @@ export const themes: Record<ThemeName, ThemeColors> = {
     ink: '#221E19',
     inkSoft: '#6E675C',
     inkFaint: '#756E64',
-    gold: '#2D8C72',
+    gold: '#287E67',
     goldSoft: '#DDEFE8',
     onGold: '#FFFFFF',
     blue: '#4A6BAA',
@@ -86,6 +86,15 @@ export const motion = {
   fast: 180,
   standard: 220,
   slow: 240,
+} as const;
+
+export const iconSize = {
+  xs: 14,
+  sm: 16,
+  md: 18,
+  lg: 20,
+  xl: 24,
+  display: 32,
 } as const;
 
 export const shadow = {
