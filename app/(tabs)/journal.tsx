@@ -39,8 +39,6 @@ export default function Journal() {
     <Text style={{ color: theme.ink, fontFamily: fonts.serif, fontSize: 32, textAlign: textAlignment(locale) }}>{t('journal.title')}</Text>
     <Text style={{ color: theme.inkSoft, fontFamily: fonts.sans, lineHeight: 22, marginTop: 6, textAlign: textAlignment(locale) }}>{t('journal.subtitle')}</Text>
 
-    <ArtSlot id="I9-night-reflection" variant="card" height={148} style={{ marginTop: spacing.xl }} />
-    <ArtSlot id="I11-journal-compose" variant="row" height={96} style={{ marginTop: spacing.xl }} />
     <TextInput
       accessibilityLabel={t('journal.noteA11y', { date: formatLocaleDate(new Date()) })}
       multiline
@@ -48,11 +46,11 @@ export default function Journal() {
       onChangeText={setText}
       placeholder={t(editingId ? 'journal.editPlaceholder' : 'journal.placeholder')}
       placeholderTextColor={theme.inkFaint}
-      style={{ minHeight: 132, marginTop: spacing.sm, backgroundColor: theme.surface, borderWidth: 1, borderColor: editingId ? theme.gold : theme.border, borderRadius: radius.card, color: theme.ink, fontFamily: fonts.sans, fontSize: 16, lineHeight: 24, padding: spacing.lg, textAlign: textAlignment(locale), textAlignVertical: 'top' }}
+      style={{ minHeight: 148, marginTop: spacing.xl, backgroundColor: theme.surface, borderWidth: 1, borderColor: editingId ? theme.gold : theme.border, borderRadius: radius.card, color: theme.ink, fontFamily: fonts.sans, fontSize: 16, lineHeight: 24, padding: spacing.lg, textAlign: textAlignment(locale), textAlignVertical: 'top' }}
     />
     <View style={{ flexDirection: rowDirection(locale), justifyContent: 'flex-start', gap: spacing.sm, marginTop: spacing.md }}>
-      {editingId ? <Pressable accessibilityRole="button" onPress={cancelEdit} style={{ borderRadius: radius.pill, paddingHorizontal: spacing.lg, paddingVertical: 11, backgroundColor: theme.surface }}><Text style={{ color: theme.inkSoft, fontFamily: fonts.sansSemiBold }}>{t('common.cancel')}</Text></Pressable> : null}
-      <Pressable accessibilityRole="button" accessibilityState={{ disabled: !canSave }} disabled={!canSave} onPress={save} style={{ backgroundColor: theme.gold, borderRadius: radius.pill, paddingHorizontal: spacing.xl, paddingVertical: 11, opacity: canSave ? 1 : 0.45 }}><Text style={{ color: theme.onGold, fontFamily: fonts.sansBold }}>{t(editingId ? 'journal.update' : 'journal.save')}</Text></Pressable>
+      {editingId ? <Pressable accessibilityRole="button" onPress={cancelEdit} style={{ minHeight: 44, justifyContent: 'center', borderRadius: radius.pill, paddingHorizontal: spacing.lg, backgroundColor: theme.surface }}><Text style={{ color: theme.inkSoft, fontFamily: fonts.sansSemiBold }}>{t('common.cancel')}</Text></Pressable> : null}
+      <Pressable accessibilityRole="button" accessibilityState={{ disabled: !canSave }} disabled={!canSave} onPress={save} style={{ backgroundColor: canSave ? theme.gold : theme.surfaceAlt, borderRadius: radius.pill, minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.xl }}><Text style={{ color: canSave ? theme.onGold : theme.inkFaint, fontFamily: fonts.sansBold }}>{t(editingId ? 'journal.update' : 'journal.save')}</Text></Pressable>
     </View>
 
     <SectionHeader title={t('common.history')} />
@@ -67,8 +65,8 @@ export default function Journal() {
       </View>
       {pendingDeleteId === entry.id ? <View style={{ flexDirection: rowDirection(locale), alignItems: 'center', gap: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: theme.border }}>
         <Text style={{ color: theme.inkSoft, fontFamily: fonts.sansMedium, fontSize: 11, flex: 1, textAlign: textAlignment(locale) }}>{t('journal.deleteQuestion')}</Text>
-        <Pressable accessibilityRole="button" onPress={() => setPendingDeleteId(null)} style={{ paddingHorizontal: spacing.md, paddingVertical: 8 }}><Text style={{ color: theme.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 11 }}>{t('common.cancel')}</Text></Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel={t('journal.deleteConfirmA11y')} onPress={() => confirmDelete(entry.id)} style={{ paddingHorizontal: spacing.md, paddingVertical: 8, borderRadius: radius.pill, backgroundColor: theme.danger }}><Text style={{ color: '#FFFFFF', fontFamily: fonts.sansBold, fontSize: 11 }}>{t('common.delete')}</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={() => setPendingDeleteId(null)} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.md }}><Text style={{ color: theme.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 11 }}>{t('common.cancel')}</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('journal.deleteConfirmA11y')} onPress={() => confirmDelete(entry.id)} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radius.pill, backgroundColor: theme.danger }}><Text style={{ color: '#FFFFFF', fontFamily: fonts.sansBold, fontSize: 11 }}>{t('common.delete')}</Text></Pressable>
       </View> : null}
     </View>)}</View>}
   </Screen>;

@@ -10,9 +10,10 @@ export type TranslationDictionary = Record<TranslationKey, string>;
 export const translations: Record<AppLocale, TranslationDictionary> = { tr, en, ar };
 
 export function interpolateTranslation(template: string, values?: TranslationValues): string {
-  if (!values) return template;
-  return template.replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (token, name: string) =>
-    Object.prototype.hasOwnProperty.call(values, name) ? String(values[name]) : token);
+  return template.replace(/\{\{\s*([\w.-]+)\s*\}\}/g, (_token, name: string) => {
+    const value = values && Object.prototype.hasOwnProperty.call(values, name) ? values[name] : undefined;
+    return value === undefined || value === null ? '—' : String(value);
+  });
 }
 export function translationFor(locale: AppLocale, key: TranslationKey, values?: TranslationValues): string {
   return interpolateTranslation(translations[locale]?.[key] ?? en[key], values);

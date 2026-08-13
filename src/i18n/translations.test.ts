@@ -23,7 +23,9 @@ for (const [locale, dictionary] of Object.entries(dictionaries)) {
   });
 }
 
-test('interpolates named values and keeps missing markers visible', () => {
+test('interpolates named values and never leaks raw template markers', () => {
   assert.equal(translationFor('en', 'common.of', { current: 2, total: 5 }), '2 of 5');
-  assert.equal(translationFor('en', 'common.of', { current: 2 }), '2 of {{total}}');
+  assert.equal(translationFor('en', 'common.of', { current: 2 }), '2 of —');
+  assert.equal(translationFor('en', 'common.of'), '— of —');
+  assert.equal(translationFor('en', 'common.of', { current: undefined, total: null } as never), '— of —');
 });

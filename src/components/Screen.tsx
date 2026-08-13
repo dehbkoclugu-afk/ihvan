@@ -8,11 +8,19 @@ export function Screen({ children, scroll = true, tabbed = false, style, scrollR
   const t = useTheme();
   const insets = useSafeAreaInsets();
   const content: ViewStyle = {
-    paddingTop: insets.top + spacing.xl,
+    paddingTop: spacing.xl,
     paddingHorizontal: spacing.xl,
-    paddingBottom: tabbed ? spacing.xxl : insets.bottom + spacing.xl,
+    paddingBottom: tabbed ? 64 + insets.bottom + spacing.xl : insets.bottom + spacing.xl,
     width: '100%', maxWidth: 560, alignSelf: 'center',
   };
-  if (!scroll) return <View style={{ flex: 1, backgroundColor: t.bg }}><View style={[content, { flex: 1 }, style]}>{children}</View></View>;
-  return <View style={{ flex: 1, backgroundColor: t.bg }}><ScrollView ref={scrollRef} contentContainerStyle={[content, style]} showsVerticalScrollIndicator={false}>{children}</ScrollView></View>;
+  const safeRoot: ViewStyle = { flex: 1, backgroundColor: t.bg, paddingTop: insets.top };
+  if (!scroll) return <View style={safeRoot}><View style={[content, { flex: 1 }, style]}>{children}</View></View>;
+  return <View style={safeRoot}><ScrollView
+    ref={scrollRef}
+    automaticallyAdjustKeyboardInsets
+    contentInsetAdjustmentBehavior="never"
+    contentContainerStyle={[content, style]}
+    keyboardShouldPersistTaps="handled"
+    showsVerticalScrollIndicator={false}
+  >{children}</ScrollView></View>;
 }
