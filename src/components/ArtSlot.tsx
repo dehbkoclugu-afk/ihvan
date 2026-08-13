@@ -19,8 +19,8 @@ export function ArtSlot({ id, height, fit = 'cover', focalPoint, radius = radii.
   const [layout, setLayout] = useState<ArtSize>({ width: 0, height: 0 });
   const resolved = useMemo(() => source ? Image.resolveAssetSource(source) : null, [source]);
   const crop = useMemo(() => fit === 'cover' && resolved
-    ? coverCropFrame(layout, { width: resolved.width, height: resolved.height }, focalPoint ?? artSpecs[id].focalPoint)
-    : null, [fit, focalPoint, id, layout, resolved]);
+    ? coverCropFrame(layout, { width: resolved.width, height: resolved.height }, focalPoint ?? artSpecs[id].focalPoints?.[artwork.scheme] ?? artSpecs[id].focalPoint)
+    : null, [artwork.scheme, fit, focalPoint, id, layout, resolved]);
   return <View onLayout={(event) => setLayout(event.nativeEvent.layout)} style={[styles.container, { height: height ?? heights[variant], borderRadius: radius, backgroundColor: theme.surfaceAlt, borderColor: theme.border }, style]}>
     {source ? <Image accessible={false} accessibilityIgnoresInvertColors importantForAccessibility="no-hide-descendants" resizeMode={crop ? 'stretch' : fit} source={source} style={crop ? [styles.croppedImage, crop] : StyleSheet.absoluteFillObject} /> : <Fallback id={id} />}
     {scrims[variant] ? <View accessible={false} importantForAccessibility="no-hide-descendants" pointerEvents="none" style={[StyleSheet.absoluteFillObject, { backgroundColor: artwork.scrim, opacity: scrims[variant] }]} /> : null}

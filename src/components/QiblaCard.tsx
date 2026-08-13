@@ -48,6 +48,7 @@ export function QiblaCard({ location }: { location: PrayerLocation }) {
     <Text style={{ color: '#F6F2E9', fontFamily: fonts.serif, fontSize: 26, marginTop: spacing.md }}>{formatLocaleNumber(Math.round(qibla))}°</Text>
     <Text style={{ color: 'rgba(246,242,233,0.65)', fontFamily: fonts.sans, fontSize: 11, textAlign: 'center', lineHeight: 17, marginTop: 3 }}>{heading === null ? t('worship.qiblaFromNorth', { degrees: formatLocaleNumber(Math.round(qibla)) }) : t('worship.liveCompassHint')}</Text>
     <Pressable accessibilityRole="switch" accessibilityState={{ checked: live }} accessibilityLabel={t('a11y.liveQibla')} onPress={() => { setError(false); setLive((value) => !value); }} style={{ minHeight: 44, marginTop: spacing.md, paddingHorizontal: spacing.lg, borderRadius: radius.pill, backgroundColor: 'rgba(255,255,255,0.10)', alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#F6F2E9', fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{t(live ? 'worship.stopCompass' : 'worship.openCompass')}</Text></Pressable>
+    {live ? <Text style={{ color: 'rgba(246,242,233,0.65)', fontFamily: fonts.sans, fontSize: 11, lineHeight: 17, marginTop: spacing.sm, textAlign: 'center' }}>{t('worship.compassCalibration')}</Text> : null}
     {error ? <Text accessibilityRole="alert" style={{ color: '#F1B6A8', fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.sm, textAlign: textAlignment(locale) }}>{t('worship.compassError')}</Text> : null}
   </View>;
 }

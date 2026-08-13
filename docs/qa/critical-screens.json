@@ -1,0 +1,31 @@
+{
+  "locales": ["tr", "en", "ar"],
+  "themes": ["dawn", "vigil"],
+  "viewports": [
+    { "name": "small", "width": 320, "height": 693 },
+    { "name": "standard", "width": 412, "height": 915 },
+    { "name": "tablet", "width": 800, "height": 1280 }
+  ],
+  "scenarios": [
+    { "id": "onboarding", "route": "app/onboarding.tsx", "state": "fresh install" },
+    { "id": "today-empty", "route": "app/(tabs)/today.tsx", "state": "long daily ayah, zero progress" },
+    { "id": "today-complete", "route": "app/(tabs)/today.tsx", "state": "four ritual steps complete" },
+    { "id": "quran-home", "route": "app/(tabs)/quran.tsx", "state": "no reading history" },
+    { "id": "quran-progress", "route": "app/(tabs)/quran.tsx", "state": "continue card and expanded plan" },
+    { "id": "quran-search", "route": "app/(tabs)/quran.tsx", "state": "meal and direct verse results" },
+    { "id": "surah-reader", "route": "app/surah/[id].tsx", "state": "medium Arabic size" },
+    { "id": "surah-reader-large", "route": "app/surah/[id].tsx", "state": "large Arabic size and translation" },
+    { "id": "juz-reader", "route": "app/juz/[id].tsx", "state": "bookmarked and read controls" },
+    { "id": "bookmarks-empty", "route": "app/bookmarks.tsx", "state": "empty" },
+    { "id": "bookmarks-filled", "route": "app/bookmarks.tsx", "state": "search and multiple results" },
+    { "id": "worship-permission", "route": "app/(tabs)/worship.tsx", "state": "location not granted" },
+    { "id": "worship-active", "route": "app/(tabs)/worship.tsx", "state": "times, qibla and notifications" },
+    { "id": "dhikr-history", "route": "app/dhikr-history.tsx", "state": "30-day history" },
+    { "id": "journal-empty", "route": "app/(tabs)/journal.tsx", "state": "empty art" },
+    { "id": "journal-edit", "route": "app/(tabs)/journal.tsx", "state": "1000-character boundary" },
+    { "id": "profile", "route": "app/(tabs)/profile.tsx", "state": "long name and zero progress" },
+    { "id": "profile-progress", "route": "app/(tabs)/profile.tsx", "state": "saved name and mixed progress" },
+    { "id": "plus-preview", "route": "app/paywall.tsx", "state": "secret-free preview APK" },
+    { "id": "plus-store", "route": "app/paywall.tsx", "state": "Play Store plans loaded" }
+  ]
+}

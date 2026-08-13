@@ -15,3 +15,9 @@ test('uses the measured native line count once it is available', () => {
 test('keeps short cards at the minimum height', () => {
   assert.equal(ayahCardHeight({ text: 'إِنَّ مَعَ ٱلْعُسْرِ يُسْرًا', measuredLines: 2, lineHeight: 46, hasAction: false }), 320);
 });
+
+test('caps a long daily verse preview without changing the full reader layout', () => {
+  const text = Array.from({ length: 120 }, () => 'كَلِمَةٌ').join(' ');
+  assert.equal(ayahCardHeight({ text, measuredLines: 21, lineHeight: 52, hasAction: true, maxLines: 7 }), 576);
+  assert.equal(ayahCardHeight({ text, measuredLines: 21, lineHeight: 52, hasAction: true }), 1304);
+});

@@ -3,6 +3,7 @@ export interface AyahCardLayoutInput {
   measuredLines: number;
   lineHeight: number;
   hasAction: boolean;
+  maxLines?: number;
 }
 
 export function estimateAyahLines(text: string): number {
@@ -10,7 +11,8 @@ export function estimateAyahLines(text: string): number {
   return Math.max(2, Math.ceil(wordCount / 5));
 }
 
-export function ayahCardHeight({ text, measuredLines, lineHeight, hasAction }: AyahCardLayoutInput): number {
-  const lines = measuredLines > 0 ? measuredLines : estimateAyahLines(text);
+export function ayahCardHeight({ text, measuredLines, lineHeight, hasAction, maxLines }: AyahCardLayoutInput): number {
+  const rawLines = measuredLines > 0 ? measuredLines : estimateAyahLines(text);
+  const lines = maxLines ? Math.min(rawLines, maxLines) : rawLines;
   return Math.max(320, 148 + lines * lineHeight + (hasAction ? 64 : 0));
 }

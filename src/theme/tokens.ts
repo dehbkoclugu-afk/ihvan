@@ -77,6 +77,17 @@ export const radius = {
   pill: 999,
 } as const;
 
+export const touch = {
+  minimum: 44,
+  comfortable: 48,
+} as const;
+
+export const motion = {
+  fast: 180,
+  standard: 220,
+  slow: 240,
+} as const;
+
 export const shadow = {
   card: {
     shadowColor: '#000',

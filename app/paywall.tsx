@@ -7,7 +7,7 @@ import { Screen } from '@/components/Screen';
 import { useTheme } from '@/hooks/useTheme';
 import { useT } from '@/i18n';
 import { rowDirection, textAlignment } from '@/i18n/direction';
-import { loadPlans, openSubscriptionManagement, purchase, restore, type PurchasePlan, type PlanId } from '@/services/purchases';
+import { isPurchasePreviewBuild, loadPlans, openSubscriptionManagement, purchase, restore, type PurchasePlan, type PlanId } from '@/services/purchases';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
 
@@ -25,7 +25,7 @@ export default function Paywall() {
     setLoading(true); setMessage(null);
     try {
       const catalog = await loadPlans(); setPlans(catalog.plans);
-      if (catalog.status === 'unavailable') setMessage(t('paywall.catalogUnavailable'));
+      if (catalog.status === 'unavailable') setMessage(t(isPurchasePreviewBuild() ? 'paywall.previewUnavailable' : 'paywall.catalogUnavailable'));
     } catch { setPlans([]); setMessage(t('paywall.catalogError')); }
     finally { setLoading(false); }
   }, [t]);

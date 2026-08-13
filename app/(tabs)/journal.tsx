@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { ArtSlot } from '@/components/ArtSlot';
+import { AppButton } from '@/components/AppButton';
 import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
 import { useArtwork } from '@/hooks/useArtwork';
@@ -9,6 +10,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { formatLocaleDate, useT } from '@/i18n';
 import { rowDirection, textAlignment } from '@/i18n/direction';
 import { useJournalStore } from '@/state/useJournalStore';
+import { successFeedback } from '@/services/haptics';
 import { fonts } from '@/theme/typography';
 import { radius, spacing } from '@/theme/tokens';
 
@@ -19,6 +21,7 @@ export default function Journal() {
   const [text, setText] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
   const { entries, add, update, remove } = useJournalStore();
   const canSave = Boolean(text.trim());
   const cancelEdit = () => { setEditingId(null); setText(''); };
@@ -26,6 +29,8 @@ export default function Journal() {
     if (!text.trim()) return;
     if (editingId) update(editingId, text);
     else add(text);
+    successFeedback();
+    setFeedback(t('journal.saved'));
     cancelEdit();
   };
   const startEdit = (id: string, value: string) => { setEditingId(id); setText(value); setPendingDeleteId(null); };
@@ -44,18 +49,20 @@ export default function Journal() {
       multiline
       value={text}
       onChangeText={setText}
+      maxLength={1000}
       placeholder={t(editingId ? 'journal.editPlaceholder' : 'journal.placeholder')}
       placeholderTextColor={theme.inkFaint}
       style={{ minHeight: 148, marginTop: spacing.xl, backgroundColor: theme.surface, borderWidth: 1, borderColor: editingId ? theme.gold : theme.border, borderRadius: radius.card, color: theme.ink, fontFamily: fonts.sans, fontSize: 16, lineHeight: 24, padding: spacing.lg, textAlign: textAlignment(locale), textAlignVertical: 'top' }}
     />
+    <Text accessibilityLiveRegion="polite" style={{ color: feedback ? theme.success : theme.inkFaint, fontFamily: fonts.sans, fontSize: 12, marginTop: spacing.sm, textAlign: textAlignment(locale) }}>{feedback ?? t('journal.characterCount', { count: text.length, max: 1000 })}</Text>
     <View style={{ flexDirection: rowDirection(locale), justifyContent: 'flex-start', gap: spacing.sm, marginTop: spacing.md }}>
-      {editingId ? <Pressable accessibilityRole="button" onPress={cancelEdit} style={{ minHeight: 44, justifyContent: 'center', borderRadius: radius.pill, paddingHorizontal: spacing.lg, backgroundColor: theme.surface }}><Text style={{ color: theme.inkSoft, fontFamily: fonts.sansSemiBold }}>{t('common.cancel')}</Text></Pressable> : null}
-      <Pressable accessibilityRole="button" accessibilityState={{ disabled: !canSave }} disabled={!canSave} onPress={save} style={{ backgroundColor: canSave ? theme.gold : theme.surfaceAlt, borderRadius: radius.pill, minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.xl }}><Text style={{ color: canSave ? theme.onGold : theme.inkFaint, fontFamily: fonts.sansBold }}>{t(editingId ? 'journal.update' : 'journal.save')}</Text></Pressable>
+      {editingId ? <AppButton label={t('common.cancel')} variant="secondary" onPress={cancelEdit} /> : null}
+      <AppButton label={t(editingId ? 'journal.update' : 'journal.save')} disabled={!canSave} onPress={save} />
     </View>
 
     <SectionHeader title={t('common.history')} />
     {entries.length === 0 ? <ArtSlot id="I10-journal-empty" variant="card" height={190}>
-      <View style={{ flex: 1, justifyContent: 'flex-end' }}><Text style={{ color: artwork.foreground, fontFamily: fonts.sansSemiBold, fontSize: 15, lineHeight: 21, textAlign: textAlignment(locale) }}>{t('journal.empty')}</Text></View>
+      <View style={{ flex: 1, justifyContent: 'flex-end' }}><Text numberOfLines={2} style={{ color: artwork.foreground, fontFamily: fonts.sansSemiBold, fontSize: 15, lineHeight: 21, textAlign: textAlignment(locale) }}>{t('journal.empty')}</Text></View>
     </ArtSlot> : <View style={{ gap: spacing.sm }}>{entries.map((entry) => <View key={entry.id} style={{ backgroundColor: theme.surface, borderWidth: 1, borderColor: editingId === entry.id ? theme.gold : theme.border, borderRadius: radius.inner, padding: spacing.lg }}>
       <Text style={{ color: theme.ink, fontFamily: fonts.sans, lineHeight: 22, textAlign: textAlignment(locale) }}>{entry.text}</Text>
       <View style={{ flexDirection: rowDirection(locale), alignItems: 'center', marginTop: spacing.sm }}>

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { AyahCard } from '@/components/AyahCard';
 import { ProgressRing } from '@/components/ProgressRing';
+import { ProgressBar } from '@/components/ProgressBar';
 import { RitualCard } from '@/components/RitualCard';
 import { Screen } from '@/components/Screen';
 import { SectionHeader } from '@/components/SectionHeader';
@@ -60,7 +61,7 @@ export default function Today() {
       <StreakMark count={streakCount} label={t('common.day')} accessibilityLabel={t('today.streak', { count: streakCount })} compact />
     </View>
 
-    <View style={{ marginTop: spacing.xl }}><AyahCard ayah={ayah} done={done('ayah')} onComplete={() => {
+    <View style={{ marginTop: spacing.xl }}><AyahCard ayah={ayah} done={done('ayah')} onOpen={() => router.push({ pathname: '/surah/[id]', params: { id: `${ayah.surah}`, ayah: `${ayah.ayah}` } })} onComplete={() => {
       if (!done('ayah')) recordAyahRead(ayah.surah, ayah.ayah);
       toggleStep('ayah');
     }} /></View>
@@ -111,6 +112,6 @@ function ProgressCard({ accessibilityLabel, icon, label, value, percent, onPress
       <Ionicons name={getDirectionalIconName('chevron-forward', locale)} size={14} color={theme.inkFaint} />
     </View>
     <Text style={{ color: theme.gold, fontFamily: fonts.sansBold, fontSize: 13, marginTop: spacing.sm, textAlign: textAlignment(locale) }}>{value}</Text>
-    <View style={{ height: 4, borderRadius: 2, backgroundColor: theme.surfaceAlt, marginTop: spacing.sm }}><View style={{ width: `${percent}%`, height: 4, borderRadius: 2, backgroundColor: theme.gold }} /></View>
+    <ProgressBar percent={percent} height={4} style={{ marginTop: spacing.sm }} />
   </Pressable>;
 }
