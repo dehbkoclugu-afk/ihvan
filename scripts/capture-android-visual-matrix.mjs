@@ -30,6 +30,25 @@ function launchUrl(url) {
   adbShell(command);
 }
 
+async function captureStableScreenshot(viewport, fileName) {
+  let lastError;
+  for (let attempt = 1; attempt <= 5; attempt += 1) {
+    try {
+      const screenshot = adb('exec-out', 'screencap', '-p');
+      const dimensions = pngDimensions(screenshot);
+      if (dimensions.width !== viewport.width || dimensions.height !== viewport.height) {
+        throw new Error(`expected ${viewport.width}x${viewport.height}, received ${dimensions.width}x${dimensions.height}`);
+      }
+      if (screenshot.length < 5_000) throw new Error(`received only ${screenshot.length} bytes`);
+      return screenshot;
+    } catch (error) {
+      lastError = error;
+      if (attempt < 5) await wait(1_000);
+    }
+  }
+  throw new Error(`${fileName}: stable screenshot unavailable after 5 attempts: ${lastError}`);
+}
+
 rmSync(outputDirectory, { recursive: true, force: true });
 mkdirSync(outputDirectory, { recursive: true });
 
@@ -44,12 +63,15 @@ try {
   for (const viewport of manifest.viewports) {
     adbShell(`wm size ${viewport.width}x${viewport.height}`);
     adbShell('wm density 160');
+    await wait(2_500);
 
     for (const fontScale of manifest.fontScales) {
       adbShell(`settings put system font_scale ${fontScale}`);
+      await wait(600);
 
       for (const theme of manifest.themes) {
         adbShell(`cmd uimode night ${theme === 'vigil' ? 'yes' : 'no'}`);
+        await wait(600);
 
         for (const locale of manifest.locales) {
           for (const target of manifest.androidSmokeTargets) {
@@ -58,12 +80,7 @@ try {
             launchUrl(url);
             await wait(delayMs);
 
-            const screenshot = adb('exec-out', 'screencap', '-p');
-            const dimensions = pngDimensions(screenshot);
-            if (dimensions.width !== viewport.width || dimensions.height !== viewport.height) {
-              throw new Error(`${fileName}: expected ${viewport.width}x${viewport.height}, received ${dimensions.width}x${dimensions.height}`);
-            }
-            if (screenshot.length < 5_000) throw new Error(`${fileName}: screenshot is unexpectedly small`);
+            const screenshot = await captureStableScreenshot(viewport, fileName);
 
             writeFileSync(path.join(outputDirectory, fileName), screenshot);
             hashes.add(createHash('sha256').update(screenshot).digest('hex'));
