@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold, Figtree_700Bold } from '@expo-google-fonts/figtree';
 import { Fraunces_400Regular, Fraunces_600SemiBold } from '@expo-google-fonts/fraunces';
+import { Amiri_400Regular } from '@expo-google-fonts/amiri';
 import { useFonts } from 'expo-font';
 import { router, Stack, type ErrorBoundaryProps } from 'expo-router';
 import * as Notifications from 'expo-notifications';
@@ -26,7 +27,7 @@ export default function RootLayout() {
   const { locale } = useT();
   const direction = getApplicationDirection(locale);
   const userStoreHydrated = useUserStoreHydrated();
-  const [loaded, error] = useFonts({ ...Ionicons.font, Fraunces_400Regular, Fraunces_600SemiBold, Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold, Figtree_700Bold });
+  const [loaded, error] = useFonts({ ...Ionicons.font, Amiri_400Regular, Fraunces_400Regular, Fraunces_600SemiBold, Figtree_400Regular, Figtree_500Medium, Figtree_600SemiBold, Figtree_700Bold });
   const notificationResponse = Notifications.useLastNotificationResponse();
   const hydrationReady = Platform.OS === 'web' || userStoreHydrated;
 

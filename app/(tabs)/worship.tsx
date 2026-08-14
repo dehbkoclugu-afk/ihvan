@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Animated, Easing, Linking, Pressable, Text, View } from 'react-native';
 import { ArtSlot } from '@/components/ArtSlot';
+import { ScreenTitle } from '@/components/AppText';
 import { PrayerTimesCard } from '@/components/PrayerTimesCard';
 import { QiblaCard } from '@/components/QiblaCard';
 import { Screen } from '@/components/Screen';
@@ -10,6 +11,7 @@ import { SectionHeader } from '@/components/SectionHeader';
 import { dailyDua, DHIKR } from '@/data/duas';
 import { useArtwork } from '@/hooks/useArtwork';
 import { usePrayerLocation } from '@/hooks/usePrayerLocation';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useTheme } from '@/hooks/useTheme';
 import { formatLocaleNumber, useT } from '@/i18n';
 import { rowDirection, textAlignment } from '@/i18n/direction';
@@ -23,7 +25,7 @@ import { useDhikrStore } from '@/state/useDhikrStore';
 import { usePrayerSettingsStore } from '@/state/usePrayerSettingsStore';
 import { usePrayerTrackingStore } from '@/state/usePrayerTrackingStore';
 import { useStreakStore } from '@/state/useStreakStore';
-import { radius, spacing } from '@/theme/tokens';
+import { motion, radius, spacing } from '@/theme/tokens';
 import { fonts } from '@/theme/typography';
 
 const reminderOffsets: PrayerReminderOffset[] = [0, 5, 10, 15, 30];
@@ -31,6 +33,7 @@ const reminderOffsets: PrayerReminderOffset[] = [0, 5, 10, 15, 30];
 export default function Worship() {
   const theme = useTheme();
   const artwork = useArtwork();
+  const reducedMotion = useReducedMotion();
   const { locale, t } = useT();
   const { day: dhikrDay, count, increment, reset } = useDhikrStore();
   const completeRitualStep = useStreakStore((state) => state.completeStep);
@@ -42,6 +45,7 @@ export default function Worship() {
   const [notificationNeedsSettings, setNotificationNeedsSettings] = useState(false);
   const notificationOperation = useRef(0);
   const lastScheduledSignature = useRef<string | null>(null);
+  const dhikrScale = useRef(new Animated.Value(1)).current;
   const dua = dailyDua();
   const completedPrayers = completions[dayKey()] ?? [];
   const prayerStreak = prayerCompletionStreak(completions);
@@ -53,6 +57,13 @@ export default function Worship() {
     if (nextCount === DAILY_DHIKR_TARGET) successFeedback();
     else selectionFeedback();
     increment();
+    if (!reducedMotion) {
+      dhikrScale.stopAnimation();
+      Animated.sequence([
+        Animated.timing(dhikrScale, { toValue: 1.06, duration: 90, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(dhikrScale, { toValue: 1, duration: motion.standard - 90, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+      ]).start();
+    }
     if (isDailyDhikrTargetReached(nextCount)) completeRitualStep('dhikr');
   }
 
@@ -146,7 +157,7 @@ export default function Worship() {
   const locationNeedsSettings = permission === 'denied' && !canAskAgain;
 
   return <Screen tabbed>
-    <Text style={{ color: theme.ink, fontFamily: fonts.serif, fontSize: 32, textAlign: textAlignment(locale) }}>{t('worship.title')}</Text>
+    <ScreenTitle>{t('worship.title')}</ScreenTitle>
     <SectionHeader title={t('worship.todayPrayers')} right={<Text style={{ color: theme.inkSoft, fontFamily: fonts.sansMedium }}>{formatLocaleNumber(completedPrayers.length)}/5</Text>} />
     <View style={{ flexDirection: rowDirection(locale), gap: spacing.sm }}>{TRACKED_PRAYERS.map((prayer) => {
       const done = completedPrayers.includes(prayer.key);
@@ -154,8 +165,7 @@ export default function Worship() {
     })}</View>
     <View style={{ flexDirection: rowDirection(locale), alignItems: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.sm }}><Ionicons name="flame-outline" size={14} color={theme.gold} /><Text style={{ color: theme.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10, marginHorizontal: 4 }}>{t('worship.prayerStreak', { count: formatLocaleNumber(prayerStreak.current) })}</Text><Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 10, marginStart: 'auto' }}>{t('worship.prayerStreakBest', { count: formatLocaleNumber(prayerStreak.best) })}</Text></View>
 
-    <SectionHeader title={t('worship.prayerTimes')} right={location ? <Pressable accessibilityRole="button" accessibilityLabel={t('a11y.refreshPrayerTimes')} hitSlop={8} onPress={() => void refresh()}><Ionicons name="refresh" size={17} color={theme.gold} /></Pressable> : undefined} />
-    <ArtSlot id="I5-prayer-times" variant="row" height={104} />
+    <SectionHeader title={t('worship.prayerTimes')} right={location ? <Pressable accessibilityRole="button" accessibilityLabel={t('a11y.refreshPrayerTimes')} onPress={() => void refresh()} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="refresh" size={17} color={theme.gold} /></Pressable> : undefined} />
     {location ? <>
       <View style={{ marginTop: spacing.sm }}><PrayerTimesCard location={location} /></View>
       <Pressable accessibilityRole="button" accessibilityLabel={t(notificationsEnabled ? 'worship.notificationsCloseA11y' : 'worship.notificationsOpenA11y')} accessibilityState={{ disabled: notificationBusy }} disabled={notificationBusy} onPress={() => void toggleNotifications()} style={{ marginTop: spacing.sm, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: radius.inner, padding: spacing.md, flexDirection: rowDirection(locale), alignItems: 'center', gap: spacing.sm, opacity: notificationBusy ? 0.6 : 1 }}>
@@ -176,7 +186,6 @@ export default function Worship() {
         <View accessibilityRole="radiogroup" style={{ flexDirection: rowDirection(locale), gap: spacing.xs, marginTop: spacing.sm }}>{reminderOffsets.map((minutes) => <Pressable key={minutes} accessibilityRole="radio" accessibilityState={{ selected: reminderMinutesBefore === minutes, disabled: notificationBusy }} disabled={notificationBusy} onPress={() => setReminderMinutesBefore(minutes)} style={{ flex: 1, minHeight: 44, borderRadius: radius.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: reminderMinutesBefore === minutes ? theme.gold : theme.surfaceAlt }}><Text numberOfLines={1} adjustsFontSizeToFit style={{ color: reminderMinutesBefore === minutes ? theme.onGold : theme.inkSoft, fontFamily: fonts.sansSemiBold, fontSize: 10 }}>{minutes ? t('worship.notificationMinutesBefore', { minutes: formatLocaleNumber(minutes) }) : t('worship.notificationExact')}</Text></Pressable>)}</View>
       </View>
       {notificationError ? <View accessibilityRole="alert" style={{ marginTop: spacing.sm, alignItems: locale === 'ar' ? 'flex-end' : 'flex-start' }}><Text style={{ color: theme.danger, fontFamily: fonts.sans, fontSize: 11, textAlign: textAlignment(locale) }}>{notificationError}</Text>{notificationNeedsSettings ? <Pressable accessibilityRole="button" onPress={() => void Linking.openSettings().catch(() => setNotificationError(t('worship.notificationSettingsOpenFailed')))} style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: theme.gold, fontFamily: fonts.sansSemiBold, fontSize: 11 }}>{t('worship.openNotificationSettings')}</Text></Pressable> : null}</View> : null}
-      <ArtSlot id="I6-qibla" variant="row" height={104} style={{ marginTop: spacing.md }} />
       <View style={{ marginTop: spacing.sm }}><QiblaCard location={location} /></View>
     </> : <View style={{ backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: radius.card, padding: spacing.xl, alignItems: 'center', marginTop: spacing.sm }}>
       <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: theme.goldSoft, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="navigate-outline" size={23} color={theme.gold} /></View>
@@ -187,14 +196,13 @@ export default function Worship() {
     </View>}
 
     <SectionHeader title={t('worship.dua')} />
-    <ArtSlot id="I8-dua" variant="row" height={104} />
-    <View style={{ backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: radius.card, padding: spacing.xl, marginTop: spacing.sm }}><Text style={{ color: theme.ink, fontSize: 30, lineHeight: 48, textAlign: 'right', writingDirection: 'rtl' }}>{dua.arabic}</Text><Text style={{ color: theme.gold, fontFamily: fonts.sansSemiBold, marginTop: spacing.md, textAlign: textAlignment(locale) }}>{dua.reference}</Text><Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.sm, textAlign: textAlignment(locale) }}>{t('worship.duaSourceNote')}</Text></View>
+    <View style={{ backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, borderRadius: radius.card, padding: spacing.xl }}><Text style={{ color: theme.ink, fontFamily: fonts.quran, fontSize: 30, lineHeight: 50, textAlign: 'right', writingDirection: 'rtl' }}>{dua.arabic}</Text><Text style={{ color: theme.gold, fontFamily: fonts.sansSemiBold, marginTop: spacing.md, textAlign: textAlignment(locale) }}>{dua.reference}</Text><Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: spacing.sm, textAlign: textAlignment(locale) }}>{t('worship.duaSourceNote')}</Text></View>
 
-    <SectionHeader title={t('worship.dhikrCounter')} right={<View style={{ flexDirection: rowDirection(locale), gap: spacing.md }}><Pressable accessibilityRole="button" onPress={() => router.push('/dhikr-history')}><Text style={{ color: theme.gold, fontFamily: fonts.sansSemiBold }}>{t('common.history')}</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel={t('worship.resetDhikrA11y')} onPress={reset}><Text style={{ color: theme.gold, fontFamily: fonts.sansSemiBold }}>{t('common.reset')}</Text></Pressable></View>} />
+    <SectionHeader title={t('worship.dhikrCounter')} right={<View style={{ flexDirection: rowDirection(locale), gap: spacing.sm }}><Pressable accessibilityRole="button" onPress={() => router.push('/dhikr-history')} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.sm }}><Text style={{ color: theme.gold, fontFamily: fonts.sansSemiBold }}>{t('common.history')}</Text></Pressable><Pressable accessibilityRole="button" accessibilityLabel={t('worship.resetDhikrA11y')} onPress={reset} style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.sm }}><Text style={{ color: theme.danger, fontFamily: fonts.sansSemiBold }}>{t('common.reset')}</Text></Pressable></View>} />
     <ArtSlot id="I7-dhikr" variant="hero" height={190}>
-      <Pressable accessibilityRole="button" accessibilityLabel={t('worship.dhikrCounterA11y', { count: formatLocaleNumber(todayDhikrCount), target: formatLocaleNumber(DAILY_DHIKR_TARGET) })} onPress={incrementDhikr} style={({ pressed }) => ({ flex: 1, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}><Text style={{ color: artwork.foreground, fontFamily: fonts.serif, fontSize: 58 }}>{formatLocaleNumber(todayDhikrCount)}</Text><Text style={{ color: artwork.foregroundMuted, fontFamily: fonts.sansMedium, marginTop: 6 }}>{t('worship.dhikrCounterHint', { target: formatLocaleNumber(DAILY_DHIKR_TARGET) })}</Text></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel={t('worship.dhikrCounterA11y', { count: formatLocaleNumber(todayDhikrCount), target: formatLocaleNumber(DAILY_DHIKR_TARGET) })} onPress={incrementDhikr} style={({ pressed }) => ({ flex: 1, alignItems: 'center', justifyContent: 'center', opacity: pressed ? 0.8 : 1 })}><Animated.View style={{ alignItems: 'center', transform: [{ scale: dhikrScale }] }}><Text style={{ color: artwork.foreground, fontFamily: fonts.serif, fontSize: 58 }}>{formatLocaleNumber(todayDhikrCount)}</Text><Text style={{ color: artwork.foregroundMuted, fontFamily: fonts.sansMedium, marginTop: 6 }}>{t('worship.dhikrCounterHint', { target: formatLocaleNumber(DAILY_DHIKR_TARGET) })}</Text></Animated.View></Pressable>
     </ArtSlot>
-    <View style={{ flexDirection: rowDirection(locale), gap: spacing.sm, marginTop: spacing.md }}>{DHIKR.map((item) => <View key={item.title} style={{ flex: 1, paddingVertical: spacing.md, backgroundColor: theme.surface, borderRadius: radius.inner, alignItems: 'center' }}><Text style={{ color: theme.ink, fontFamily: fonts.sansSemiBold, fontSize: 12 }}>{item.title}</Text><Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: 2 }}>{formatLocaleNumber(item.target)}</Text></View>)}</View>
+    <View style={{ flexDirection: rowDirection(locale), gap: spacing.sm, marginTop: spacing.md }}>{DHIKR.map((item) => <View key={item.title} style={{ flex: 1, minWidth: 0, paddingHorizontal: spacing.xs, paddingVertical: spacing.md, backgroundColor: theme.surface, borderRadius: radius.inner, alignItems: 'center' }}><Text numberOfLines={1} adjustsFontSizeToFit style={{ width: '100%', color: theme.ink, fontFamily: fonts.sansSemiBold, fontSize: 12, textAlign: 'center' }}>{item.title}</Text><Text style={{ color: theme.inkFaint, fontFamily: fonts.sans, fontSize: 11, marginTop: 2 }}>{formatLocaleNumber(item.target)}</Text></View>)}</View>
     <SectionHeader title={t('worship.next')} />
     <Text style={{ color: theme.inkSoft, fontFamily: fonts.sans, lineHeight: 22, textAlign: textAlignment(locale) }}>{t('worship.audioPending')}</Text>
   </Screen>;

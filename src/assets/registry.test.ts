@@ -7,6 +7,8 @@ test('every approved artwork ID has metadata and a theme pair', () => {
   for (const id of ART_IDS) {
     assert.ok(artSpecs[id].label);
     assert.match(artSpecs[id].size, /^\d+x\d+$/);
+    assert.ok(artSpecs[id].focalPoint.x >= 0 && artSpecs[id].focalPoint.x <= 1);
+    assert.ok(artSpecs[id].focalPoint.y >= 0 && artSpecs[id].focalPoint.y <= 1);
     assert.deepEqual(Object.keys(themedArtRegistry[id]).sort(), ['dawn', 'vigil']);
   }
 });

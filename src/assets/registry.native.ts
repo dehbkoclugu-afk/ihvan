@@ -1,6 +1,6 @@
 import type { ArtworkPair, AssetId } from './registry.shared';
 export { ART_IDS, artSpecs } from './registry.shared';
-export type { ArtworkPair, AssetId, ArtSpec } from './registry.shared';
+export type { ArtworkPair, AssetId, ArtFocalPoint, ArtSpec } from './registry.shared';
 
 export const themedArtRegistry: Record<AssetId, ArtworkPair> = {
   'I1-brand-mark': { dawn: require('../../assets/brand-mark.png'), vigil: require('../../assets/brand-mark.png') },

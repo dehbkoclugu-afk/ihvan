@@ -29,6 +29,9 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Audit design system and critical-screen matrix
+        run: npm run audit:design
+
       - name: Expo doctor
         run: npx expo-doctor@1.20.1
 

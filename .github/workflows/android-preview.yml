@@ -103,9 +103,40 @@ jobs:
             adb logcat -c
             adb shell monkey -p com.ihvan.quran -c android.intent.category.LAUNCHER 1
             sleep 30
+            mkdir -p screenshots
+            adb exec-out screencap -p > screenshots/01-onboarding.png
+            adb shell input tap 540 2112
+            sleep 5
+            adb exec-out screencap -p > screenshots/02-today.png
+            adb shell am start -W -a android.intent.action.VIEW -d "ihvan://quran" com.ihvan.quran >/dev/null
+            sleep 3
+            adb exec-out screencap -p > screenshots/03-quran.png
+            adb shell am start -W -a android.intent.action.VIEW -d "ihvan://worship" com.ihvan.quran >/dev/null
+            sleep 3
+            adb exec-out screencap -p > screenshots/04-worship.png
+            adb shell am start -W -a android.intent.action.VIEW -d "ihvan://journal" com.ihvan.quran >/dev/null
+            sleep 3
+            adb exec-out screencap -p > screenshots/05-journal.png
+            adb shell am start -W -a android.intent.action.VIEW -d "ihvan://profile" com.ihvan.quran >/dev/null
+            sleep 3
+            adb exec-out screencap -p > screenshots/06-profile.png
+            adb shell am start -W -a android.intent.action.VIEW -d "ihvan://paywall" com.ihvan.quran >/dev/null
+            sleep 3
+            adb exec-out screencap -p > screenshots/07-paywall.png
+            test "$(find screenshots -name '*.png' -size +50000c | wc -l)" -eq 7
+            test "$(sha256sum screenshots/*.png | awk '{print $1}' | sort -u | wc -l)" -ge 4
             adb logcat -d > logcat.txt
             adb shell pidof com.ihvan.quran
             ! grep -Eq "FATAL EXCEPTION|Fatal signal|tombstoned" logcat.txt
+
+      - name: Upload UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ihvan-preview-screenshots
+          path: screenshots/*.png
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload logcat
         if: always()

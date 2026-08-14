@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { QURAN_SURAHS } from '@/data/quran';
 import { mergeQuranReadAyahs, normalizeQuranAyahKey, normalizeQuranAyahKeys, normalizeQuranReadingGoal, normalizeQuranReadingPosition, recordAyahRead as recordReadingDay, retainQuranReadingState, type QuranReadingDays, type QuranReadingGoal, type QuranReadingPosition } from '@/lib/quranHabit';
+import { normalizeQuranPlanDays, type QuranPlanDays } from '@/lib/quranPlan';
 
 export type QuranPosition = QuranReadingPosition;
 
@@ -12,10 +13,12 @@ interface QuranProgressState {
   readingDays: QuranReadingDays;
   readAyahs: string[];
   readingGoal: QuranReadingGoal;
+  quranPlanDays: QuranPlanDays;
   setLastRead: (surah: number, ayah: number) => void;
   recordAyahRead: (surah: number, ayah: number, date?: Date) => void;
   markAyahRead: (surah: number, ayah: number, date?: Date) => void;
   setReadingGoal: (goal: QuranReadingGoal) => void;
+  setQuranPlanDays: (days: QuranPlanDays) => void;
   toggleBookmark: (surah: number, ayah: number) => void;
   enforceRetention: () => void;
   clearProgress: () => void;
@@ -32,6 +35,7 @@ export const useQuranProgressStore = create<QuranProgressState>()(
       readingDays: {},
       readAyahs: [],
       readingGoal: 5,
+      quranPlanDays: 60,
       setLastRead: (surah, ayah) => set(() => validKeyFor(surah, ayah)
         ? { lastRead: { surah, ayah, updatedAt: new Date().toISOString() } }
         : {}),
@@ -53,6 +57,7 @@ export const useQuranProgressStore = create<QuranProgressState>()(
         };
       }),
       setReadingGoal: (readingGoal) => set({ readingGoal: normalizeQuranReadingGoal(readingGoal) }),
+      setQuranPlanDays: (quranPlanDays) => set({ quranPlanDays: normalizeQuranPlanDays(quranPlanDays) }),
       toggleBookmark: (surah, ayah) => set((state) => {
         const key = validKeyFor(surah, ayah);
         if (!key) return {};
@@ -74,6 +79,7 @@ export const useQuranProgressStore = create<QuranProgressState>()(
           lastRead: normalizeQuranReadingPosition(persisted.lastRead, surahAyahCounts),
           bookmarks: normalizeQuranAyahKeys(persisted.bookmarks, surahAyahCounts),
           readingGoal: normalizeQuranReadingGoal(persisted.readingGoal),
+          quranPlanDays: normalizeQuranPlanDays(persisted.quranPlanDays),
         };
       },
       onRehydrateStorage: () => (state) => state?.enforceRetention(),

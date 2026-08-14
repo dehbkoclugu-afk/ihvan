@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Screen } from '@/components/Screen';
+import { ScreenSubtitle, ScreenTitle } from '@/components/AppText';
 import { useTheme } from '@/hooks/useTheme';
 import { formatLocaleDate, formatLocaleNumber, useT } from '@/i18n';
 import { getDirectionalIconName, rowDirection, textAlignment } from '@/i18n/direction';
@@ -31,8 +32,8 @@ export default function PrayerHistory() {
 
   return <Screen>
     <Pressable accessibilityRole="button" accessibilityLabel={t('common.back')} onPress={() => router.back()} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.surface, alignItems: 'center', justifyContent: 'center', alignSelf: locale === 'ar' ? 'flex-end' : 'flex-start' }}><Ionicons name={getDirectionalIconName('arrow-back', locale)} size={20} color={theme.ink} /></Pressable>
-    <Text style={{ color: theme.ink, fontFamily: fonts.serif, fontSize: 32, marginTop: spacing.xl, textAlign: textAlignment(locale) }}>{t('prayerHistory.title')}</Text>
-    <Text style={{ color: theme.inkSoft, fontFamily: fonts.sans, lineHeight: 21, marginTop: 6, textAlign: textAlignment(locale) }}>{t('prayerHistory.subtitle')}</Text>
+    <ScreenTitle style={{ marginTop: spacing.xl }}>{t('prayerHistory.title')}</ScreenTitle>
+    <ScreenSubtitle>{t('prayerHistory.subtitle')}</ScreenSubtitle>
 
     <View style={{ flexDirection: rowDirection(locale), gap: spacing.sm, marginTop: spacing.xl }}>
       {[7, 30, 90].map((period) => <View key={period} style={{ flex: 1, backgroundColor: theme.surface, borderRadius: radius.inner, paddingVertical: spacing.lg, alignItems: 'center' }}><Text style={{ color: theme.gold, fontFamily: fonts.serif, fontSize: 25 }}>%{formatLocaleNumber(prayerCompletionPercent(completions, period))}</Text><Text style={{ color: theme.inkFaint, fontFamily: fonts.sansMedium, fontSize: 10, marginTop: 3 }}>{t('prayerHistory.days', { count: formatLocaleNumber(period) })}</Text></View>)}

@@ -47,6 +47,10 @@ const apiKey =
 const entitlementId =
   process.env.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID?.trim() || 'ihvan_plus';
 
+export function isPurchasePreviewBuild(): boolean {
+  return !__DEV__ && !apiKey;
+}
+
 let rc: typeof import('react-native-purchases').default | null = null;
 let initPromise: Promise<void> | null = null;
 let customerInfoListenerAttached = false;
