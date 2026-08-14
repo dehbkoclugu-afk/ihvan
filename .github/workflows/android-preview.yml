@@ -80,6 +80,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download preview APK
         uses: actions/download-artifact@v4
         with:
@@ -126,12 +129,10 @@ jobs:
             adb exec-out screencap -p > screenshots/07-paywall.png
             test "$(find screenshots -name '*.png' -size +50000c | wc -l)" -eq 7
             test "$(sha256sum screenshots/*.png | awk '{print $1}' | sort -u | wc -l)" -ge 4
+            node scripts/capture-android-visual-matrix.mjs screenshots-matrix
             adb logcat -d > logcat.txt
             adb shell pidof com.ihvan.quran
             ! grep -Eq "FATAL EXCEPTION|Fatal signal|tombstoned" logcat.txt
-
-      - name: Capture locale, theme, viewport and font-scale matrix
-        run: node scripts/capture-android-visual-matrix.mjs screenshots-matrix
 
       - name: Upload visual QA matrix
         if: always()
