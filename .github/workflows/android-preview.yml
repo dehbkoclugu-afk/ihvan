@@ -28,6 +28,7 @@ jobs:
     env:
       CI: '1'
       EXPO_NO_TELEMETRY: '1'
+      EXPO_PUBLIC_VISUAL_QA: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,7 +78,7 @@ jobs:
   smoke:
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Download preview APK
         uses: actions/download-artifact@v4
@@ -128,6 +129,18 @@ jobs:
             adb logcat -d > logcat.txt
             adb shell pidof com.ihvan.quran
             ! grep -Eq "FATAL EXCEPTION|Fatal signal|tombstoned" logcat.txt
+
+      - name: Capture locale, theme, viewport and font-scale matrix
+        run: node scripts/capture-android-visual-matrix.mjs screenshots-matrix
+
+      - name: Upload visual QA matrix
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ihvan-visual-qa-matrix
+          path: screenshots-matrix/*.png
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload UI screenshots
         if: always()

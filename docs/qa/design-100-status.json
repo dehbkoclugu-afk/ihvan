@@ -1,13 +1,12 @@
 {
   "updatedForCommit": "pending",
   "scoring": "completed=1, partial=0.5, pending=0",
-  "completed": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,20,21,23,24,25,26,28,30,31,32,33,34,35,36,37,38,39,41,42,43,44,45,46,47,48,49,51,52,53,54,55,56,57,58,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,86,87,88,91,92,93,98,99],
-  "partial": [18,22,27,29,40,50,59,85,90,94,95,97],
-  "pending": [89,96,100],
+  "completed": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,19,20,21,23,24,25,26,27,28,30,31,32,33,34,35,36,37,38,39,41,42,43,44,45,46,47,48,49,51,52,53,54,55,56,57,58,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,86,87,88,91,92,93,96,97,98,99],
+  "partial": [18,22,29,40,50,59,85,90,94,95],
+  "pending": [89,100],
   "remaining": {
     "18": "The shared icon-size token exists; legacy screens still contain raw icon sizes.",
     "22": "Primary body copy is 14pt or larger; compact metadata remains deliberately smaller.",
-    "27": "System font scaling is enabled, but the full 130% matrix still needs captured-device verification.",
     "29": "Critical percentages and progress counts stay together; all secondary number/unit combinations are not audited yet.",
     "40": "Small, medium and large Quran metrics have unit coverage; device screenshots for all three remain manual.",
     "50": "Android CI captures real reference screenshots, but all art slots are not baseline-diffed yet.",
@@ -17,8 +16,6 @@
     "90": "Primary actions are clear on critical screens; all secondary screens are not migrated yet.",
     "94": "The new dhikr transition uses the 220ms token; legacy press-state feedback is not animated.",
     "95": "Shared controls use consistent scale feedback; legacy Pressables still use opacity in places.",
-    "96": "Android CI captures multiple routes, but automated TR/EN/AR switching is not implemented.",
-    "97": "The viewport matrix is release-blocking metadata; emulator screenshots currently run at one phone viewport.",
     "100": "The release checklist exists, but human TalkBack, font-scale and Play Store sign-off cannot be self-certified by CI."
   }
 }
