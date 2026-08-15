@@ -8,7 +8,9 @@ const status = JSON.parse(await read('docs/qa/design-100-status.json'));
 
 assert.deepEqual(manifest.locales, ['tr', 'en', 'ar'], 'visual QA must cover TR, EN and AR');
 assert.deepEqual(manifest.themes, ['dawn', 'vigil'], 'visual QA must cover both themes');
+assert.deepEqual(manifest.fontScales, [1, 1.3], 'visual QA must cover normal and 130% system font scaling');
 assert.deepEqual(manifest.viewports.map(({ name }) => name), ['small', 'standard', 'tablet'], 'visual QA needs small, standard and tablet viewports');
+assert.deepEqual(manifest.androidSmokeTargets, ['onboarding', 'today', 'quran', 'worship', 'journal', 'profile', 'paywall'], 'Android visual smoke targets changed unexpectedly');
 assert.equal(manifest.scenarios.length, 20, 'exactly 20 critical UI scenarios must stay release-blocking');
 assert.equal(new Set(manifest.scenarios.map(({ id }) => id)).size, 20, 'critical UI scenario ids must be unique');
 
@@ -30,11 +32,14 @@ const allStatusIds = [...status.completed, ...status.partial, ...status.pending]
 assert.deepEqual(allStatusIds, Array.from({ length: 100 }, (_, index) => index + 1), 'the 100-point design plan must track every item exactly once');
 assert.equal(new Set(allStatusIds).size, 100, 'design status ids must not overlap');
 const weightedScore = status.completed.length + status.partial.length / 2;
-assert.equal(weightedScore, 91, 'design progress score changed; update the reviewed status file intentionally');
+assert.equal(weightedScore, 93, 'design progress score changed; update the reviewed status file intentionally');
 const rootLayout = await read('app/_layout.tsx');
 assert.match(rootLayout, /Amiri_400Regular/, 'the dedicated Arabic font must remain bundled');
 const previewWorkflow = await read('.github/workflows/android-preview.yml');
 assert.match(previewWorkflow, /ihvan-preview-screenshots/, 'Android preview must upload real UI screenshots');
 assert.match(previewWorkflow, /screencap/, 'Android preview must capture the running app');
+assert.match(previewWorkflow, /capture-android-visual-matrix\.mjs/, 'Android preview must capture the locale, theme, viewport and font-scale matrix');
+const visualQaRoute = await read('app/visual-qa.tsx');
+assert.match(visualQaRoute, /EXPO_PUBLIC_VISUAL_QA === '1'/, 'the visual QA deep link must stay disabled outside dedicated preview builds');
 
-console.log(`Design audit passed: score ${weightedScore}/100; ${manifest.scenarios.length} scenarios × ${manifest.locales.length} locales × ${manifest.themes.length} themes × ${manifest.viewports.length} viewports.`);
+console.log(`Design audit passed: score ${weightedScore}/100; ${manifest.scenarios.length} scenarios × ${manifest.locales.length} locales × ${manifest.themes.length} themes × ${manifest.viewports.length} viewports × ${manifest.fontScales.length} font scales.`);

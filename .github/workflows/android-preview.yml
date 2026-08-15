@@ -28,6 +28,7 @@ jobs:
     env:
       CI: '1'
       EXPO_NO_TELEMETRY: '1'
+      EXPO_PUBLIC_VISUAL_QA: '1'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,8 +78,11 @@ jobs:
   smoke:
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download preview APK
         uses: actions/download-artifact@v4
         with:
@@ -125,9 +129,19 @@ jobs:
             adb exec-out screencap -p > screenshots/07-paywall.png
             test "$(find screenshots -name '*.png' -size +50000c | wc -l)" -eq 7
             test "$(sha256sum screenshots/*.png | awk '{print $1}' | sort -u | wc -l)" -ge 4
+            node scripts/capture-android-visual-matrix.mjs screenshots-matrix
             adb logcat -d > logcat.txt
             adb shell pidof com.ihvan.quran
             ! grep -Eq "FATAL EXCEPTION|Fatal signal|tombstoned" logcat.txt
+
+      - name: Upload visual QA matrix
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ihvan-visual-qa-matrix
+          path: screenshots-matrix/*.png
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Upload UI screenshots
         if: always()

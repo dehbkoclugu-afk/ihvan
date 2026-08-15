@@ -1,11 +1,13 @@
 {
   "locales": ["tr", "en", "ar"],
   "themes": ["dawn", "vigil"],
+  "fontScales": [1, 1.3],
   "viewports": [
     { "name": "small", "width": 320, "height": 693 },
     { "name": "standard", "width": 412, "height": 915 },
     { "name": "tablet", "width": 800, "height": 1280 }
   ],
+  "androidSmokeTargets": ["onboarding", "today", "quran", "worship", "journal", "profile", "paywall"],
   "scenarios": [
     { "id": "onboarding", "route": "app/onboarding.tsx", "state": "fresh install" },
     { "id": "today-empty", "route": "app/(tabs)/today.tsx", "state": "long daily ayah, zero progress" },
